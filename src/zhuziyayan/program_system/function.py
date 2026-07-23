@@ -1,27 +1,5 @@
-from zhuziyayan.code_utils import next_function_name, next_statement
 from zhuziyayan.program_system.context import Context
-
-
-class FunctionInfo:
-    def __init__(self, source_code: str):
-        self._source_code: str = source_code
-
-        # 解析 name
-        self._name, source_code = next_function_name(source_code)
-
-        # 解析 statements
-        self._statements: list[str] = []
-        while source_code:
-            statement, source_code = next_statement(source_code)
-            self._statements.append(statement)
-
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def statements(self) -> list[str]:
-        return self._statements
+from zhuziyayan.interpreter.function_info import FunctionInfo
 
 
 class Function:
@@ -42,8 +20,8 @@ class Function:
         """
         local_context = Context(global_context=global_context)
         # TODO: 当语句解析器实现后，替换为：
-        # for stmt_str in self._info.statements:
-        #     stmt = parse_statement(stmt_str, local_context)
+        # for stmt_info in self._info.statements:
+        #     stmt = parse_statement(stmt_info.statement, local_context)
         #     stmt.run()
         raise NotImplementedError(
             f"函数 '{self._info.name}' 的语句解析器尚未实现"

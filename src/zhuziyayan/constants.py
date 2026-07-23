@@ -59,3 +59,14 @@ FLOAT_LITERAL_CHARS = INTEGER_LITERAL_CHARS | DECIMAL_PLACE_CHARS
 
 BOOL_TRUE_CHARS = frozenset({'是', '然'})
 BOOL_FALSE_CHARS = frozenset({'否', '非'})
+
+# =============================================================================
+# 注释 — 古文注疏风格的注释系统
+# =============================================================================
+
+# 注释定义/注解的括号
+LEFT_ANNOTATION = '【'
+RIGHT_ANNOTATION = '】'
+
+# 注解关键字 — 分隔注释标识符与注解内容
+ANNOTATION_SEPARATOR = '：'

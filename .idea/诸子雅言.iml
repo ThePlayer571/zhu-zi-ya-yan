@@ -7,4 +7,9 @@
     <orderEntry type="jdk" jdkName="D:\Miniconda3\envs\zhuziyayan" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
+  <component name="PyDocumentationSettings" />
+  <component name="ReSTService" />
+  <component name="TestRunnerService">
+    <option name="PROJECT_TEST_RUNNER" value="py.test" />
+  </component>
 </module>
