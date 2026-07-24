@@ -532,13 +532,13 @@ class FunctionCallStatement(Statement):
 
         program = Program.get_running()
         if program is None:
-            return
+            raise RuntimeError("Program 实例不存在，无法执行函数调用语句")
 
         function_info = program.get_function_info(self._function_name)
         if function_info is None:
             return
 
-        global_context = Program.get_global_context()
+        global_context = program.get_global_context()
         func = Function(function_info, global_context)
         func.execute()
 
@@ -585,13 +585,13 @@ class IfStatement(Statement):
 
             program = Program.get_running()
             if program is None:
-                return
+                raise RuntimeError("Program 实例不存在，无法执行条件调用语句")
 
             function_info = program.get_function_info(self._function_name)
             if function_info is None:
                 return
 
-            global_context = Program.get_global_context()
+            global_context = program.get_global_context()
             func = Function(function_info, global_context)
             func.execute()
 
@@ -618,11 +618,17 @@ class OutputStatement(Statement):
         return self._target_variable_name
 
     def run(self):
+        from zhuziyayan.program_system.program import Program
+
         if not self._context.has_variable(self._target_variable_name):
             return
 
+        program = Program.get_running()
+        if program is None:
+            raise RuntimeError("Program 实例不存在，无法执行输出语句")
+
         target_var = self._context.get_variable(self._target_variable_name)
-        print(target_var.value.to_literal_string())
+        program.get_io_strategy().write_output(target_var.value.to_literal_string())
 
 
 # =============================================================================
@@ -663,14 +669,17 @@ class InputStatement(Statement):
         return self._prompt
 
     def run(self):
+        from zhuziyayan.program_system.program import Program
+
         if not self._context.has_variable(self._target_variable_name):
             self._context.set_to_none(self._target_variable_name)
             return
 
-        if self._prompt is not None:
-            print(self._prompt)
+        program = Program.get_running()
+        if program is None:
+            raise RuntimeError("Program 实例不存在，无法执行输入语句")
 
-        raw = input()
+        raw = program.get_io_strategy().read_input(self._prompt)
         target_var = self._context.get_variable(self._target_variable_name)
         existing_type = target_var.value.type
 
