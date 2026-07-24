@@ -12,7 +12,7 @@ class Context:
     当前上下文未找到变量时会向上查找。
     """
 
-    def __init__(self, global_context: Context | None = None):
+    def __init__(self, global_context: Context | None):
         self._variables: dict[str, Variable] = {}
         self._global_context: Context | None = global_context
 

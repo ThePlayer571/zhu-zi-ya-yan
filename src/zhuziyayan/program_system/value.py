@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from enum import Enum
 
+from zhuziyayan.utils import format_chinese_float, format_chinese_integer
+
 
 class ValueType(Enum):
     """值类型。"""
@@ -122,3 +124,36 @@ class Value:
     def raw(self):
         """返回原始 Python 值。"""
         return self._raw
+
+    def to_literal_string(self) -> str:
+        """将值转换为文言字面量字符串。
+
+        按值类型分派到对应的格式化逻辑。
+
+        各类型的转换规则：
+
+        - NONE → "无"。
+        - STRING → 原样返回。
+        - INTEGER → 文言数字（如 123 转为 "一百二十三"）。
+        - FLOAT → 文言浮点数（如 3.14 转为 "三又一秒四厘"）。
+        - BOOLEAN → "是" 或 "否"。
+        - *_LIST → 元素用 "、" 连接，各元素按对应标量类型格式化。
+        """
+        if self._type == ValueType.NONE:
+            return "无"
+        elif self._type == ValueType.STRING:
+            return self._raw
+        elif self._type == ValueType.INTEGER:
+            return format_chinese_integer(self._raw)
+        elif self._type == ValueType.FLOAT:
+            return format_chinese_float(self._raw)
+        elif self._type == ValueType.BOOLEAN:
+            return "是" if self._raw else "否"
+        elif self._type == ValueType.STRING_LIST:
+            return "、".join(self._raw)
+        elif self._type == ValueType.INTEGER_LIST:
+            return "、".join(format_chinese_integer(v) for v in self._raw)
+        elif self._type == ValueType.FLOAT_LIST:
+            return "、".join(format_chinese_float(v) for v in self._raw)
+        elif self._type == ValueType.BOOLEAN_LIST:
+            return "、".join("是" if v else "否" for v in self._raw)

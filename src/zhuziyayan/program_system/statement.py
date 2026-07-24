@@ -3,8 +3,6 @@ from __future__ import annotations
 import copy
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Callable
-
 from zhuziyayan.program_system.context import Context
 from zhuziyayan.program_system.expression import (
     ValueExpression,
@@ -18,9 +16,13 @@ from zhuziyayan.program_system.value import (
     is_zero,
     is_positive,
 )
-
-if TYPE_CHECKING:
-    from zhuziyayan.program_system.function import Function
+from zhuziyayan.translator.statement_info import StatementInfo
+from zhuziyayan.utils import (
+    try_parse_boolean_input,
+    try_parse_float_input,
+    try_parse_integer_input,
+    try_parse_string_input,
+)
 
 
 # =============================================================================
@@ -53,14 +55,14 @@ class Statement(ABC):
     每条语句对应源码中的一条可执行单元，以终止符（。？！）结尾。
     """
 
-    def __init__(self, source_code: str, context: Context):
-        self._source_code = source_code
+    def __init__(self, statement_info: StatementInfo, context: Context):
+        self._statement_info = statement_info
         self._context = context
 
     @property
-    def source_code(self) -> str:
+    def statement_info(self) -> StatementInfo:
         """该语句对应的源码文本。"""
-        return self._source_code
+        return self._statement_info
 
     @abstractmethod
     def run(self):
@@ -79,9 +81,9 @@ class VariableDefinitionStatement(Statement):
     定义新变量并初始化为指定的类型和值。
     """
 
-    def __init__(self, source_code: str, context: Context,
+    def __init__(self, statement_info: StatementInfo, context: Context,
                  variable_name: str, value: Value):
-        super().__init__(source_code, context)
+        super().__init__(statement_info, context)
         self._variable_name = variable_name
         self._value = value
 
@@ -110,9 +112,9 @@ class AssignmentStatement(Statement):
     将右侧值返回表达式的值赋给左侧变量。
     """
 
-    def __init__(self, source_code: str, context: Context,
+    def __init__(self, statement_info: StatementInfo, context: Context,
                  target_variable_name: str, source: ValueExpression):
-        super().__init__(source_code, context)
+        super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
         self._source = source
 
@@ -139,16 +141,15 @@ class AssignmentStatement(Statement):
             return
 
         raw = source_value.raw
-        target_type = target_var.value.type
 
         # 列表赋值需要深拷贝
-        if target_type in (
-            ValueType.STRING_LIST, ValueType.INTEGER_LIST,
-            ValueType.FLOAT_LIST, ValueType.BOOLEAN_LIST,
+        if source_value.type in (
+                ValueType.STRING_LIST, ValueType.INTEGER_LIST,
+                ValueType.FLOAT_LIST, ValueType.BOOLEAN_LIST,
         ):
             raw = copy.deepcopy(raw)
 
-        new_value = Value(target_type, raw)
+        new_value = Value(source_value.type, raw)
         target_var.set_value(new_value)
 
 
@@ -163,10 +164,10 @@ class ComputeAssignmentStatement(Statement):
     对变量执行运算后将结果赋回原变量。
     """
 
-    def __init__(self, source_code: str, context: Context,
+    def __init__(self, statement_info: StatementInfo, context: Context,
                  target_variable_name: str, operator: ComputeOperator,
                  source: ValueExpression):
-        super().__init__(source_code, context)
+        super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
         self._operator = operator
         self._source = source
@@ -253,8 +254,8 @@ class ComputeAssignmentStatement(Statement):
             return _UNSUPPORTED
 
         elif value_type in (
-            ValueType.STRING_LIST, ValueType.INTEGER_LIST,
-            ValueType.FLOAT_LIST, ValueType.BOOLEAN_LIST,
+                ValueType.STRING_LIST, ValueType.INTEGER_LIST,
+                ValueType.FLOAT_LIST, ValueType.BOOLEAN_LIST,
         ):
             if op == ComputeOperator.ADD:
                 return lhs_raw + rhs_raw
@@ -274,9 +275,9 @@ class ZeroCheckStatement(Statement):
     判断变量是否为"零"，将布尔结果赋回原变量。
     """
 
-    def __init__(self, source_code: str, context: Context,
+    def __init__(self, statement_info: StatementInfo, context: Context,
                  target_variable_name: str):
-        super().__init__(source_code, context)
+        super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
 
     @property
@@ -305,9 +306,9 @@ class PositiveCheckStatement(Statement):
     判断变量是否为"正"，将布尔结果赋回原变量。
     """
 
-    def __init__(self, source_code: str, context: Context,
+    def __init__(self, statement_info: StatementInfo, context: Context,
                  target_variable_name: str):
-        super().__init__(source_code, context)
+        super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
 
     @property
@@ -336,10 +337,10 @@ class ListIndexModifyStatement(Statement):
     修改列表指定位置（1-based）的元素。
     """
 
-    def __init__(self, source_code: str, context: Context,
+    def __init__(self, statement_info: StatementInfo, context: Context,
                  target_variable_name: str, index: int,
                  source: ValueExpression):
-        super().__init__(source_code, context)
+        super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
         self._index = index  # 1-based
         self._source = source
@@ -398,9 +399,9 @@ class ListAppendStatement(Statement):
     向列表末尾追加新元素。
     """
 
-    def __init__(self, source_code: str, context: Context,
+    def __init__(self, statement_info: StatementInfo, context: Context,
                  target_variable_name: str, source: ValueExpression):
-        super().__init__(source_code, context)
+        super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
         self._source = source
 
@@ -446,9 +447,9 @@ class ListPopTailStatement(Statement):
     删除列表的最后一个元素。
     """
 
-    def __init__(self, source_code: str, context: Context,
+    def __init__(self, statement_info: StatementInfo, context: Context,
                  target_variable_name: str):
-        super().__init__(source_code, context)
+        super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
 
     @property
@@ -480,9 +481,9 @@ class ListPopHeadStatement(Statement):
     删除列表的第一个元素。
     """
 
-    def __init__(self, source_code: str, context: Context,
+    def __init__(self, statement_info: StatementInfo, context: Context,
                  target_variable_name: str):
-        super().__init__(source_code, context)
+        super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
 
     @property
@@ -511,15 +512,14 @@ class ListPopHeadStatement(Statement):
 class FunctionCallStatement(Statement):
     """函数调用语句。
 
-    调用指定名称的函数。
+    调用指定名称的函数。每次调用创建新的 Function 实例，
+    以全局 Context 为 external_context，保证独立的局部作用域。
     """
 
-    def __init__(self, source_code: str, context: Context,
-                 function_name: str,
-                 function_provider: Callable[[str], Function]):
-        super().__init__(source_code, context)
+    def __init__(self, statement_info: StatementInfo, context: Context,
+                 function_name: str):
+        super().__init__(statement_info, context)
         self._function_name = function_name
-        self._function_provider = function_provider
 
     @property
     def function_name(self) -> str:
@@ -527,9 +527,20 @@ class FunctionCallStatement(Statement):
         return self._function_name
 
     def run(self):
-        func = self._function_provider(self._function_name)
-        if func is not None:
-            func.execute(self._context)
+        from zhuziyayan.program_system.program import Program
+        from zhuziyayan.program_system.function import Function
+
+        program = Program.get_running()
+        if program is None:
+            return
+
+        function_info = program.get_function_info(self._function_name)
+        if function_info is None:
+            return
+
+        global_context = Program.get_global_context()
+        func = Function(function_info, global_context)
+        func.execute()
 
 
 # =============================================================================
@@ -541,15 +552,14 @@ class IfStatement(Statement):
     """If 条件语句。
 
     若条件变量为 True，则调用指定函数；否则跳过。
+    函数调用时创建新的 Function 实例，以全局 Context 为 external_context。
     """
 
-    def __init__(self, source_code: str, context: Context,
-                 condition_variable_name: str, function_name: str,
-                 function_provider: Callable[[str], Function]):
-        super().__init__(source_code, context)
+    def __init__(self, statement_info: StatementInfo, context: Context,
+                 condition_variable_name: str, function_name: str):
+        super().__init__(statement_info, context)
         self._condition_variable_name = condition_variable_name
         self._function_name = function_name
-        self._function_provider = function_provider
 
     @property
     def condition_variable_name(self) -> str:
@@ -570,9 +580,20 @@ class IfStatement(Statement):
             return
 
         if cond_var.value.raw:
-            func = self._function_provider(self._function_name)
-            if func is not None:
-                func.execute(self._context)
+            from zhuziyayan.program_system.program import Program
+            from zhuziyayan.program_system.function import Function
+
+            program = Program.get_running()
+            if program is None:
+                return
+
+            function_info = program.get_function_info(self._function_name)
+            if function_info is None:
+                return
+
+            global_context = Program.get_global_context()
+            func = Function(function_info, global_context)
+            func.execute()
 
 
 # =============================================================================
@@ -586,12 +607,10 @@ class OutputStatement(Statement):
     将变量的值展示于外界。
     """
 
-    def __init__(self, source_code: str, context: Context,
-                 target_variable_name: str,
-                 output_fn: Callable[[object], None] = print):
-        super().__init__(source_code, context)
+    def __init__(self, statement_info: StatementInfo, context: Context,
+                 target_variable_name: str):
+        super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
-        self._output_fn = output_fn
 
     @property
     def target_variable_name(self) -> str:
@@ -603,7 +622,7 @@ class OutputStatement(Statement):
             return
 
         target_var = self._context.get_variable(self._target_variable_name)
-        self._output_fn(target_var.value.raw)
+        print(target_var.value.to_literal_string())
 
 
 # =============================================================================
@@ -614,29 +633,72 @@ class OutputStatement(Statement):
 class InputStatement(Statement):
     """输入语句。
 
-    从外界读取一行数据，以字符串类型存入变量。
+    从外界读取一行数据，尽量保持变量原有类型。
+
+    根据变量当前类型对输入文本进行解析：
+
+    - INTEGER：全字匹配非负整数字面量，成功则更新值，失败则置 None。
+    - FLOAT：全字匹配非负浮点数字面量，成功则更新值，失败则置 None。
+    - BOOLEAN：全字匹配单个布尔字面量字符，成功则更新值，失败则置 None。
+    - STRING / NONE：原样存入字符串。
+    - 列表类型：无法输入，置 None。
+
+    支持可选的提示字符串（问/询/质 关键字后可接字符串字面量）。
     """
 
-    def __init__(self, source_code: str, context: Context,
-                 target_variable_name: str,
-                 input_fn: Callable[[], str] = input):
-        super().__init__(source_code, context)
+    def __init__(self, statement_info: StatementInfo, context: Context,
+                 target_variable_name: str, prompt: str | None = None):
+        super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
-        self._input_fn = input_fn
+        self._prompt = prompt
 
     @property
     def target_variable_name(self) -> str:
         """接收输入的变量名。"""
         return self._target_variable_name
 
+    @property
+    def prompt(self) -> str | None:
+        """输入前显示的提示字符串；无提示时为 None。"""
+        return self._prompt
+
     def run(self):
         if not self._context.has_variable(self._target_variable_name):
             self._context.set_to_none(self._target_variable_name)
             return
 
-        raw = self._input_fn()
+        if self._prompt is not None:
+            print(self._prompt)
+
+        raw = input()
         target_var = self._context.get_variable(self._target_variable_name)
-        target_var.set_value(Value(ValueType.STRING, raw))
+        existing_type = target_var.value.type
+
+        if existing_type == ValueType.INTEGER:
+            parsed = try_parse_integer_input(raw)
+            if parsed is not None:
+                target_var.set_value(Value(ValueType.INTEGER, parsed))
+            else:
+                target_var.set_value(Value(ValueType.NONE, None))
+        elif existing_type == ValueType.FLOAT:
+            parsed = try_parse_float_input(raw)
+            if parsed is not None:
+                target_var.set_value(Value(ValueType.FLOAT, parsed))
+            else:
+                target_var.set_value(Value(ValueType.NONE, None))
+        elif existing_type == ValueType.BOOLEAN:
+            parsed = try_parse_boolean_input(raw)
+            if parsed is not None:
+                target_var.set_value(Value(ValueType.BOOLEAN, parsed))
+            else:
+                target_var.set_value(Value(ValueType.NONE, None))
+        elif existing_type == ValueType.STRING:
+            target_var.set_value(Value(ValueType.STRING, try_parse_string_input(raw)))
+        elif existing_type == ValueType.NONE:
+            target_var.set_value(Value(ValueType.STRING, try_parse_string_input(raw)))
+        else:
+            # 列表类型无法输入
+            target_var.set_value(Value(ValueType.NONE, None))
 
 
 # =============================================================================

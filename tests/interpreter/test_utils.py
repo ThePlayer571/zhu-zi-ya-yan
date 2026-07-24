@@ -1,4 +1,4 @@
-from zhuziyayan.interpreter.utils import translate_function, translate_program
+from zhuziyayan.translator.translator import translate_function, translate_program
 
 
 class TestTranslateFunction:

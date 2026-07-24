@@ -1,4 +1,4 @@
-from zhuziyayan.interpreter.statement_info import StatementInfo
+from zhuziyayan.translator.statement_info import StatementInfo
 
 
 class FunctionInfo:

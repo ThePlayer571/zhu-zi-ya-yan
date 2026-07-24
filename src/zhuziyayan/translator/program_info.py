@@ -1,4 +1,4 @@
-from zhuziyayan.interpreter.function_info import FunctionInfo
+from zhuziyayan.translator.function_info import FunctionInfo
 
 
 class ProgramInfo:

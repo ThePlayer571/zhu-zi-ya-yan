@@ -1,28 +1,39 @@
+from __future__ import annotations
+
 from zhuziyayan.program_system.context import Context
-from zhuziyayan.interpreter.function_info import FunctionInfo
+from zhuziyayan.program_system.statement import Statement
+from zhuziyayan.translator.function_info import FunctionInfo
+import zhuziyayan.program_system.statement_decider as statement_decider
 
 
 class Function:
-    def __init__(self, function_info: FunctionInfo, context: Context):
-        self._info = function_info
-        self._context = context
+    """函数。
+
+    封装一个函数的信息和执行上下文。执行时逐条解析并运行语句。
+    """
+
+    def __init__(
+        self,
+        function_info: FunctionInfo,
+        external_context: Context | None,
+    ):
+        self._info: FunctionInfo = function_info
+        self._context: Context = Context(external_context)
 
     @property
     def info(self) -> FunctionInfo:
+        """该函数对应的 FunctionInfo。"""
         return self._info
 
-    def execute(self, global_context: Context):
-        """在给定的全局上下文中执行该函数。
+    @property
+    def context(self) -> Context:
+        """该函数的执行上下文。"""
+        return self._context
 
-        创建局部上下文，解析并执行函数体内的所有语句。
-
-        当前为占位实现，待语句解析器完成后替换。
-        """
-        local_context = Context(global_context=global_context)
-        # TODO: 当语句解析器实现后，替换为：
-        # for stmt_info in self._info.statements:
-        #     stmt = parse_statement(stmt_info.statement, local_context)
-        #     stmt.run()
-        raise NotImplementedError(
-            f"函数 '{self._info.name}' 的语句解析器尚未实现"
-        )
+    def execute(self):
+        """解析并执行函数体内的所有语句。"""
+        for statement_info in self._info.statements:
+            statement: Statement = statement_decider.decide(
+                statement_info, self._context
+            )
+            statement.run()
