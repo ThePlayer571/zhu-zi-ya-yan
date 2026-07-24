@@ -121,10 +121,28 @@ def next_full_function(source_code: str) -> tuple[str, str, str]:
     if not function_name:
         return "", "", ""
 
-    # 解析函数体
-    function_body, source_code, _ = next_keywords(source_code, {constants.LEFT_BOOK_TITLE}, False)
-
-    return function_name, function_body, source_code
+    # 解析函数体：跳过函数调用中的《...》，找到真正的函数定义边界
+    # 函数调用《的前一个字符为行/践/施/修/用
+    search_start = 0
+    while True:
+        pos = source_code.find(constants.LEFT_BOOK_TITLE, search_start)
+        if pos == -1:
+            # 没有更多《，剩余全部为函数体
+            return function_name, source_code, ""
+        if pos == 0:
+            # 《在开头 → 真正的函数边界，函数体为空
+            return function_name, "", source_code
+        # 检查《的前一个字符是否是函数调用关键字
+        if source_code[pos - 1] in constants.FUNCTION_CALL_KEYWORDS:
+            # 这是函数调用中的《...》，跳过
+            close_pos = source_code.find(constants.RIGHT_BOOK_TITLE, pos + 1)
+            if close_pos == -1:
+                # 没有对应的》，函数体到此为止
+                return function_name, source_code[:pos], source_code[pos:]
+            search_start = close_pos + 1
+            continue
+        # 非函数调用的《 → 真正的函数边界
+        return function_name, source_code[:pos], source_code[pos:]
 
 
 def extract_annotation_bodies(source_code: str) -> tuple[str, dict[str, str]]:

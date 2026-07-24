@@ -354,13 +354,13 @@ def _parse_definition(
     if result is not None:
         return result
 
-    # 3. 整数定义
-    result = _try_integer_definition(statement_info, context, var_name, text_after_var)
+    # 3. 列表定义 — "举/列"很具体，优先于单独的"数"
+    result = _try_list_definition(statement_info, context, var_name, text_after_var)
     if result is not None:
         return result
 
-    # 4. 列表定义 — "举/列"很具体
-    result = _try_list_definition(statement_info, context, var_name, text_after_var)
+    # 4. 整数定义
+    result = _try_integer_definition(statement_info, context, var_name, text_after_var)
     if result is not None:
         return result
 

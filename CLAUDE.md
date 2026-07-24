@@ -2,10 +2,159 @@
 
 诸子雅言是一门春秋时期古文风的深奥编程语言。
 
-## 开发环境
+## 项目结构
 
-- 文档位于 `docs/教程.md`
-    - 这个文档是给人看的，因此文风应该是现代文档风格。
+### 非代码重要文件
+
+| 路径             | 说明                                                  |
+|------------------|-------------------------------------------------------|
+| `docs/教程.md`   | 语言教程，是语言语法的权威参考                        |
+| `scripts/run.py` | 启动器脚本，演示正确的导入方式和两步执行流程          |
+| `output/`        | Manim 渲染输出（images、texts、videos）——已 gitignore |
+
+### 包架构
+
+源码位于 `src/zhuziyayan/`，分为 **两个独立子包**和 **两个共享模块**：
+
+```
+src/zhuziyayan/
+├── constants.py            # 共享：所有语言语法常量/关键字集合
+├── utils.py                # 共享：关键字扫描、中文数字解析/格式化、输入校验
+├── translator/             # 前端解析管道：源码文本 → 结构化 Info 对象
+│   ├── translator.py       #   入口：translate_program()、translate_function()
+│   ├── utils.py            #   底层词法工具：next_function_name()、
+│   │                       #     next_statement()、next_full_function()、
+│   │                       #     extract_annotation_bodies()、
+│   │                       #     extract_annotation_definitions()
+│   ├── program_info.py     #   ProgramInfo 数据类
+│   ├── function_info.py    #   FunctionInfo 数据类
+│   └── statement_info.py   #   StatementInfo 数据类
+└── program_system/         # 后端执行引擎：Info 对象 → 运行时执行
+    ├── program.py          #   Program 运行时（单例），入口：run()
+    ├── function.py         #   Function 执行：execute() 遍历语句列表
+    ├── statement.py        #   14 种 Statement 子类（ABC 基类），对应 14 种语言结构
+    ├── statement_decider.py#   decide()：将 StatementInfo 路由到具体 Statement 子类
+    ├── context.py          #   嵌套变量作用域管理器（local → global 链）
+    ├── expression.py       #   ValueExpression ABC + VariableExpression +
+    │                       #     ListIndexExpression
+    ├── variable.py         #   Variable 封装（对非负类型自动截断负值）
+    ├── value.py            #   Value + ValueType 枚举 + is_zero/is_positive 辅助函数
+    └── io_strategy.py      #   IOStrategy ABC + PythonNativeIO（input()/print()）
+```
+
+#### translator — 前端解析
+
+`translator` 包负责将原始文言源码文本解析为结构化信息对象。核心入口是
+`translate_program(source_code: str) -> ProgramInfo`。
+
+设计约定：
+
+- **永不抛出异常**：任何输入（包括空字符串、乱码）都能生成一个合法的 `ProgramInfo`。缺失/空输入回退为 `《无名》` 和空列表。
+
+#### program_system — 后端执行
+
+`program_system` 包接收 `translator` 输出的 `*Info` 对象并执行程序。
+
+设计约定：
+
+- **Statement 永不抛出异常**：任何错误条件都会静默将目标变量设为 `Value(ValueType.NONE, None)`，而非抛出异常。
+- **仅有的例外**是 `FunctionCallStatement`、`OutputStatement`、`InputStatement` 在无 `Program` 实例运行时抛出
+  `RuntimeError`——这些是编程错误，而非用户程序错误。
+- **Program 是单例**：同一时间只能有一个 `Program` 实例在运行。
+
+#### 共享模块
+
+- **`constants.py`**：语言词汇表的唯一真相来源。包括标点符号、变量后缀、数字系统字符、类型定义关键字、操作关键字、控制流关键字、I/O
+  关键字、注解标记。
+- **`utils.py`**：通用函数。`next_keywords()` 是核心扫描引擎；中文数字解析/格式化支持文言数字系统；`try_parse_*` 系列函数供
+  `InputStatement` 用于运行时类型保持的输入解析。
+
+### 数据流
+
+```
+原始源码文本 (str)
+    │
+    ▼
+translator/translator.py::translate_program(source_code)
+    │  去除空白 → 提取《书名》函数 → 提取《篇章》函数 →
+    │  提取注解正文【id：内容】→ 按句读分割语句 → 移除注解定义【id】
+    │
+    ▼
+ProgramInfo
+  ├── title_function: FunctionInfo  （程序入口点，以《书名》命名）
+  │     ├── name: str
+  │     ├── statements: list[StatementInfo]
+  │     │     ├── _statement: str          （清洗后的语句文本，无注解标记）
+  │     │     └── _annotation_ids: list[str]
+  │     └── _annotations: dict[str, str]   （key → 内容，来自【key：内容】）
+  └── chapter_functions: list[FunctionInfo]
+        └── （结构同 title_function）
+    │
+    ▼
+program_system/program.py::Program(program_info, io_strategy).run()
+    │
+    ├── 创建 Function(title_function, external_context=None)
+    │     └── 遍历 StatementInfo → statement_decider.decide() → Statement 子类
+    │           └── statement.run() 修改 Context 中的变量
+    │
+    └── 对每个篇章函数（通过书名函数体中的 FunctionCallStatement 调用）：
+          └── Function(chapter_function_info, global_context).execute()
+```
+
+### 语句类型（14 种）
+
+`statement.py` 中定义了 14 种 `Statement` 子类：
+
+| #  | 类                            | 语言功能                                        |
+|----|-------------------------------|-------------------------------------------------|
+| 1  | `VariableDefinitionStatement` | 定义新变量并初始化                              |
+| 2  | `AssignmentStatement`         | 赋值（=），列表赋值进行深拷贝                   |
+| 3  | `ComputeAssignmentStatement`  | 计算赋值（+=、-=、*=、/=、%=）                  |
+| 4  | `ZeroCheckStatement`          | 判零（虚/空/阴），将变量替换为布尔值            |
+| 5  | `PositiveCheckStatement`      | 判正（正/善/阳），将变量替换为布尔值            |
+| 6  | `ListIndexModifyStatement`    | 按 1-based 索引修改列表元素                     |
+| 7  | `ListAppendStatement`         | 向列表追加元素（接/增）                         |
+| 8  | `ListPopTailStatement`        | 删除列表尾部元素（削/刈）                       |
+| 9  | `ListPopHeadStatement`        | 删除列表头部元素（斩/刎）                       |
+| 10 | `FunctionCallStatement`       | 调用命名篇章函数（行/践/施/修/用）              |
+| 11 | `IfStatement`                 | 条件函数调用（若/倘/苟/使 … 则/即 … 行《fn》）  |
+| 12 | `OutputStatement`             | 输出变量值（曰/言/谓/宣/吟）                    |
+| 13 | `InputStatement`              | 读取输入到变量（问/询/质 带提示，听/闻 无提示） |
+| 14 | `LiteraryStatement`           | 无意义语句的 no-op 占位符                       |
+
+### 测试目录
+
+```
+tests/
+├── __init__.py
+├── conftest.py          # 将 src/ 加入 sys.path
+└── interpreter/         # 旧称"解释器"，tests 目录沿用此名
+    ├── __init__.py
+    └── test_utils.py    # 测试 translator/translator.py 的翻译函数
+```
+
+注意：
+
+- 测试目录名为 `interpreter/`（项目旧称），而非 `translator/`。这是历史命名遗留。
+- `test_utils.py` 实际测试的是 `translator.py` 中的 `translate_function()` 和 `translate_program()`，而非 `utils.py`。
+- 目前仅 translator 模块有测试；program_system 尚未编写测试。
+
+### 导入方式
+
+本项目 **没有** `pyproject.toml`、`setup.py`，`src/zhuziyayan/` 及其子目录中也 **没有** `__init__.py`。导入能正常工作是因为
+`tests/conftest.py` 和 `scripts/run.py` 在运行时将 `src/` 加入了 `sys.path`。
+
+导入示例：
+
+```python
+from zhuziyayan.translator.translator import translate_program
+from zhuziyayan.program_system.program import Program
+from zhuziyayan.program_system.io_strategy import PythonNativeIO
+```
+
+### 本文档的维护
+
+修改项目结构（新增/删除/重命名模块、改变架构约定、调整数据流）时，必须同步更新本文档中对应的「项目结构」节。本文档是 AI 助手的项目认知基础，过时的文档比没有文档更糟。
 
 ## 注释规范
 
@@ -68,15 +217,25 @@ def next_keywords(source_code: str, keywords: set[str], include: bool = True) ->
 
 ### 目录结构
 
+测试目录镜像 `src/zhuziyayan/` 的结构：每个 `src/zhuziyayan/<模块>/` 对应一个 `tests/<模块>/`。
+
 ```
 tests/
 ├── conftest.py          # 将 src/ 加入 sys.path，确保 import 无需 PYTHONPATH
-└── interpreter/
-    └── test_interpreter.py   # Interpreter 相关测试
+└── interpreter/         # 旧称，对应 translator 模块（历史命名遗留）
+    └── test_utils.py    # 测试 translate_program()、translate_function()
 ```
 
-测试目录镜像 `src/zhuziyayan/` 的结构：每个 `src/zhuziyayan/<模块>/` 对应一个 `tests/<模块>/`。
+### 测试策略
 
-### 何时写测试
+测试是项目的重要组成部分。编写新模块或修改现有模块时，应同步编写或更新测试。测试应覆盖 `translator` 和 `program_system`
+两个包。
 
-**仅在用户显式要求时**才编写或修改测试。不要主动添加测试。
+测试的基本原则：
+
+- 每个公开函数/方法至少有一个正常路径测试。
+- 边界条件（空输入、None、越界、非法字符等）应有独立的测试用例。
+- 不抛出异常的约定应通过测试验证——translator 接受任意输入，statement 遇错静默置 None。
+- `IOStrategy` 是抽象接口，program_system 的 I/O 相关测试可通过 mock 实现。
+
+注意：目前仅 `translator` 模块有测试，`program_system` 模块尚未编写测试。在用户明确要求进入测试编写阶段之前，不需要主动添加新的测试文件。
