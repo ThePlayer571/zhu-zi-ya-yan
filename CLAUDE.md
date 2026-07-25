@@ -2,6 +2,8 @@
 
 诸子雅言是一门春秋时期古文风的深奥编程语言。
 
+**当前阶段**：后端核心（translator 解析器 + program_system 执行引擎）已完成。正在构建前端（Vue 3）及后端 API 层（FastAPI），用于 Web 交互。
+
 ## 项目结构
 
 ### 非代码重要文件
@@ -9,10 +11,22 @@
 | 路径             | 说明                                                  |
 |------------------|-------------------------------------------------------|
 | `docs/教程.md`   | 语言教程，是语言语法的权威参考                        |
-| `scripts/run.py` | 启动器脚本，演示正确的导入方式和两步执行流程          |
+| `scripts/run.py` | CLI 启动器脚本，演示正确的导入方式和两步执行流程      |
 | `output/`        | Manim 渲染输出（images、texts、videos）——已 gitignore |
 
-### 包架构
+### 顶层目录
+
+```
+诸子雅言/
+├── src/zhuziyayan/   # 核心解释器（translator + program_system）
+├── backend/           # FastAPI 服务器（REST + WebSocket）
+├── frontend/          # Vue 3 SPA 前端
+├── scripts/           # CLI 脚本和示例源码
+├── tests/             # pytest 测试
+└── docs/              # 文档
+```
+
+### 解释器核心
 
 源码位于 `src/zhuziyayan/`，分为 **两个独立子包**和 **两个共享模块**：
 
@@ -71,6 +85,8 @@ src/zhuziyayan/
 
 ### 数据流
 
+#### 解释器核心（CLI 模式）
+
 ```
 原始源码文本 (str)
     │
@@ -99,6 +115,34 @@ program_system/program.py::Program(program_info, io_strategy).run()
     │
     └── 对每个篇章函数（通过书名函数体中的 FunctionCallStatement 调用）：
           └── Function(chapter_function_info, global_context).execute()
+```
+
+#### Web 模式（前端 → API → 解释器）
+
+```
+Frontend (Vue 3)                   Backend (FastAPI)              Interpreter Core
+     │                                  │                              │
+     │  WebSocket /ws/run               │                              │
+     │  {"type":"run",                  │                              │
+     │   "source_code":"《...》"}       │                              │
+     │─────────────────────────────────>│                              │
+     │                                  │  ThreadedIOStrategy           │
+     │                                  │  + 后台线程                    │
+     │                                  │──────────────────────────────>│
+     │  {"type":"output",               │  write_output()               │
+     │   "text":"五"}                   │<──────────────────────────────│
+     │<─────────────────────────────────│                              │
+     │  {"type":"input_prompt",         │  read_input()                 │
+     │   "prompt":"请输入"}             │<── 阻塞，等待 queue ─────────│
+     │<─────────────────────────────────│                              │
+     │  {"type":"input",                │  provide_input()              │
+     │   "text":"42"}                   │──────────────────────────────>│
+     │─────────────────────────────────>│                              │
+     │  {"type":"trace",                │  recorder.get_entries()       │
+     │   "entries":[...]}              │<──────────────────────────────│
+     │<─────────────────────────────────│                              │
+     │  {"type":"done"}                 │                              │
+     │<─────────────────────────────────│                              │
 ```
 
 ### 语句类型（14 种）
@@ -154,7 +198,157 @@ from zhuziyayan.program_system.io_strategy import PythonNativeIO
 
 ### 本文档的维护
 
-修改项目结构（新增/删除/重命名模块、改变架构约定、调整数据流）时，必须同步更新本文档中对应的「项目结构」节。本文档是 AI 助手的项目认知基础，过时的文档比没有文档更糟。
+修改项目结构（新增/删除/重命名模块、改变架构约定、调整数据流）时，必须同步更新本文档中对应的节。本文档是 AI 助手的项目认知基础，过时的文档比没有文档更糟。涉及 `frontend/`、`backend/` 目录变更时同样需要同步更新。
+
+## Frontend
+
+前端是 Vue 3 SPA，使用 Vite 构建，位于 `frontend/` 目录。
+
+### 工具链
+
+- **Vite 5** — 构建工具，HMR 开发服务器
+- **Vue 3** — Composition API（`<script setup lang="ts">`）
+- **TypeScript** — 严格模式
+- **Pinia** — 状态管理
+
+### 目录结构
+
+```
+frontend/
+├── index.html
+├── package.json
+├── vite.config.ts
+├── tsconfig.json
+└── src/
+    ├── main.ts                # 入口：创建 app、注册 Pinia
+    ├── App.vue                # 根组件：两栏布局
+    ├── api/
+    │   └── websocket.ts       # ProgramWebSocket 客户端封装
+    ├── stores/
+    │   └── program.ts         # Pinia store：源码、输出、输入状态、复盘
+    ├── components/
+    │   ├── CodeEditor.vue     # 源码编辑器（textarea，monospace）
+    │   ├── RunButton.vue      # 运行 / 取消按钮
+    │   ├── OutputDisplay.vue  # 输出日志滚动区
+    │   ├── InputPrompt.vue    # 输入提示（条件显示，等待输入时出现）
+    │   └── TracePanel.vue     # 经注疏复盘面板（可折叠）
+    └── types/
+        └── index.ts           # TypeScript 接口定义
+```
+
+### 组件树
+
+```
+App.vue
+├── RunButton.vue          # 工具栏：运行/取消 + 连接状态指示
+├── CodeEditor.vue         # 左栏：源码输入
+├── OutputDisplay.vue      # 右栏上：输出日志（自动滚底）
+├── InputPrompt.vue        # 右栏中：条件显示（仅 isAwaitingInput 时）
+└── TracePanel.vue         # 右栏下：可折叠复盘面板
+```
+
+### Store 结构（program.ts）
+
+- **State**: `sourceCode`, `output[]`, `isRunning`, `isAwaitingInput`, `inputPrompt`, `traceEntries[]`, `connectionStatus`
+- **Actions**: `connect()`, `runProgram()`, `cancelProgram()`, `provideInput(text)`, `resetOutput()`
+- **约定**: 始终使用 WebSocket 通信（统一处理交互/非交互程序）
+
+### WebSocket 客户端
+
+`ProgramWebSocket` 类封装 WebSocket 连接，通过回调接口 `WsCallbacks` 向 store 报告事件：
+- `onOutput(text)` — 程序输出
+- `onInputPrompt(prompt)` — 程序等待输入
+- `onTrace(entries)` — 执行复盘数据
+- `onDone()` — 执行完成
+- `onError(message)` — 错误
+- `onDisconnect()` — 连接断开
+- `onStatusChange(status)` — 连接状态变化
+
+### 开发命令
+
+```bash
+cd frontend
+npm install           # 安装依赖
+npm run dev           # 启动开发服务器（localhost:5173）
+npm run build         # 生产构建
+```
+
+## Backend API
+
+FastAPI 服务器，位于 `backend/` 目录，作为前端与解释器核心之间的桥梁。
+
+### 目录结构
+
+```
+backend/
+├── __init__.py
+├── main.py                # FastAPI app 入口 + uvicorn 启动
+├── models/
+│   ├── __init__.py
+│   └── schemas.py         # Pydantic 请求/响应模型
+├── routers/
+│   ├── __init__.py
+│   ├── run.py             # POST /api/run（非交互式 REST）
+│   └── ws.py              # WebSocket /ws/run（交互式）
+└── services/
+    ├── __init__.py
+    ├── web_io.py          # ThreadedIOStrategy（queue + event 桥接）
+    └── runner.py          # run_program() 执行逻辑封装
+```
+
+### 导入策略
+
+在 `backend/main.py` 顶部将 `src/` 加入 `sys.path`，与 `scripts/run.py` 和 `tests/conftest.py` 保持一致。`backend/` 是常规 Python 包（有 `__init__.py`）。
+
+### API 端点
+
+#### POST `/api/run` — 非交互式执行
+
+请求：`{"source_code": "《程序》甲子数五。甲子言。"}`
+
+响应：`{"success": true, "output": ["五"], "trace": {"entries": [...]}}`
+
+如果源码包含输入语句（问/询/质/听/闻），返回 `requires_input: true` 提示使用 WebSocket。
+
+#### WebSocket `/ws/run` — 交互式执行
+
+消息协议（JSON）：
+
+**服务器 → 客户端：**
+
+| type            | 字段                | 说明                       |
+|-----------------|---------------------|---------------------------|
+| `output`        | `text: str`         | 程序输出行                  |
+| `input_prompt`  | `prompt: str\|null` | 程序等待输入                |
+| `trace`         | `entries: list`     | 执行复盘（RecordEntry 列表）|
+| `done`          | —                   | 执行完成                    |
+| `error`         | `message: str`      | 错误消息                    |
+
+**客户端 → 服务器：**
+
+| type   | 字段                | 说明           |
+|--------|---------------------|---------------|
+| `run`  | `source_code: str`  | 启动执行       |
+| `input`| `text: str`         | 提供输入文本    |
+
+### ThreadedIOStrategy 设计
+
+由于 `Program.run()` 是同步阻塞的（通过 `IOStrategy.read_input()` 等待输入），后端在后台线程中运行程序，通过 `queue.Queue` + `threading.Event` 桥接同步 I/O 与异步 WebSocket：
+
+- 程序线程调用 `write_output(text)` → 放入 `_output_queue`，由异步 send 循环消费
+- 程序线程调用 `read_input(prompt)` → 放入 `[INPUT:prompt]` 标记到 output queue，然后阻塞等待 `_input_event`
+- 异步 recv 循环收到输入 → 调用 `provide_input(text)` → 放入 `_input_queue` 并设置 `_input_event` 唤醒程序线程
+
+### 开发命令
+
+```bash
+# 启动 API 服务器（从项目根目录）
+python backend/main.py
+# 或
+uvicorn backend.main:app --reload
+```
+
+服务器默认监听 `localhost:8000`，CORS 允许 `localhost:5173`。
 
 ## 注释规范
 
