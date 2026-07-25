@@ -1,7 +1,17 @@
 <script setup lang="ts">
-import { useProgramStore } from '../stores/program'
+defineProps<{
+  modelValue: string
+  disabled?: boolean
+}>()
 
-const store = useProgramStore()
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+}>()
+
+function onInput(event: Event): void {
+  const target = event.target as HTMLTextAreaElement
+  emit('update:modelValue', target.value)
+}
 </script>
 
 <template>
@@ -11,11 +21,12 @@ const store = useProgramStore()
       <span>源码</span>
     </div>
     <textarea
-      v-model="store.sourceCode"
-      :disabled="store.isRunning"
+      :value="modelValue"
+      :disabled="disabled"
       placeholder="在此输入文言源码…"
       spellcheck="false"
       class="editor-textarea"
+      @input="onInput"
     />
   </div>
 </template>

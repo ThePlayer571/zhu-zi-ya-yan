@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useProgramStore } from '../stores/program'
 import type { TraceEntry } from '../types'
 
 const props = withDefaults(defineProps<{
+  entries: TraceEntry[]
   alwaysOpen?: boolean
 }>(), {
   alwaysOpen: false,
 })
 
-const store = useProgramStore()
 const isExpanded = ref(false)
 
-const hasEntries = computed(() => store.traceEntries.length > 0)
+const hasEntries = computed(() => props.entries.length > 0)
 
 function toggle(): void {
   if (props.alwaysOpen) return
@@ -64,14 +63,14 @@ function formatEntry(entry: TraceEntry): string[] {
         v-if="hasEntries && !isExpanded"
         class="entry-count"
       >
-        ({{ store.traceEntries.length }})
+        ({{ entries.length }})
       </span>
     </button>
 
     <div v-if="showBody" class="trace-body">
       <template v-if="hasEntries">
         <div
-          v-for="(entry, i) in store.traceEntries"
+          v-for="(entry, i) in entries"
           :key="i"
           class="trace-entry"
         >
@@ -90,7 +89,7 @@ function formatEntry(entry: TraceEntry): string[] {
             </div>
           </template>
           <div
-            v-if="i < store.traceEntries.length - 1"
+            v-if="i < entries.length - 1"
             class="trace-separator"
           />
         </div>

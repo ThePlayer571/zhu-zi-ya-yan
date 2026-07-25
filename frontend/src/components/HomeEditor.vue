@@ -24,11 +24,21 @@ watch(() => store.isAwaitingInput, (val) => {
 <template>
   <section id="editor-section" class="home-editor">
     <div class="editor-shell">
-      <RunButton />
+      <RunButton
+        :can-run="store.canRun"
+        :is-running="store.isRunning"
+        :has-just-finished="store.hasJustFinished"
+        @run="store.runProgram()"
+        @cancel="store.cancelProgram()"
+      />
       <div class="editor-main">
         <!-- 左栏：代码编辑器 -->
         <div class="editor-left">
-          <CodeEditor />
+          <CodeEditor
+            :model-value="store.sourceCode"
+            :disabled="store.isRunning"
+            @update:model-value="store.sourceCode = $event"
+          />
         </div>
 
         <!-- 右栏：选项卡切换 -->
@@ -61,13 +71,17 @@ watch(() => store.isAwaitingInput, (val) => {
 
           <!-- 输入输出面板 -->
           <div v-show="activeTab === 'io'" class="tab-panel io-panel">
-            <OutputDisplay />
-            <InputPrompt />
+            <OutputDisplay :lines="store.output" />
+            <InputPrompt
+              :visible="store.isAwaitingInput"
+              :prompt-text="store.inputPrompt"
+              @submit="store.provideInput($event)"
+            />
           </div>
 
           <!-- 经注疏面板 -->
           <div v-show="activeTab === 'trace'" class="tab-panel trace-panel-full">
-            <TracePanel :always-open="true" />
+            <TracePanel :entries="store.traceEntries" :always-open="true" />
           </div>
         </div>
       </div>

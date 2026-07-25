@@ -1,13 +1,20 @@
 <script setup lang="ts">
-import { useProgramStore } from '../stores/program'
+const props = defineProps<{
+  canRun: boolean
+  isRunning: boolean
+  hasJustFinished: boolean
+}>()
 
-const store = useProgramStore()
+const emit = defineEmits<{
+  run: []
+  cancel: []
+}>()
 
 function handleClick(): void {
-  if (store.isRunning) {
-    store.cancelProgram()
+  if (props.isRunning) {
+    emit('cancel')
   } else {
-    store.runProgram()
+    emit('run')
   }
 }
 </script>
@@ -17,17 +24,17 @@ function handleClick(): void {
     <button
       class="run-btn"
       :class="{
-        running: store.isRunning,
-        finished: store.hasJustFinished && !store.isRunning
+        running: isRunning,
+        finished: hasJustFinished && !isRunning
       }"
-      :disabled="!store.isRunning && !store.canRun"
+      :disabled="!isRunning && !canRun"
       @click="handleClick"
     >
-      <template v-if="store.isRunning">
+      <template v-if="isRunning">
         <span class="spinner" />
         终止
       </template>
-      <template v-else-if="store.hasJustFinished">
+      <template v-else-if="hasJustFinished">
         <span class="btn-icon-finish">✓</span>
         运行结束
       </template>

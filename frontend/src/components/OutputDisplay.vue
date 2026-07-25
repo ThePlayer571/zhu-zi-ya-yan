@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
-import { useProgramStore } from '../stores/program'
 
-const store = useProgramStore()
+const props = defineProps<{
+  lines: string[]
+}>()
+
 const scrollContainer = ref<HTMLElement | null>(null)
 
 watch(
-  () => store.output.length,
+  () => props.lines.length,
   async () => {
     await nextTick()
     if (scrollContainer.value) {
@@ -23,9 +25,9 @@ watch(
       <span>输出</span>
     </div>
     <div ref="scrollContainer" class="output-body">
-      <template v-if="store.output.length > 0">
+      <template v-if="lines.length > 0">
         <div
-          v-for="(line, i) in store.output"
+          v-for="(line, i) in lines"
           :key="i"
           class="output-line"
         >

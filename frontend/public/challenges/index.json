@@ -4,7 +4,7 @@
       "id": "hello-world",
       "title": "你好世界",
       "description": "输出「你好世界」四个字。\n\n此为入门之题，只需令程序输出「你好世界」即可通关。",
-      "difficulty": "easy",
+      "difficultyGroup": "开蒙",
       "category": "入门",
       "testCases": [
         {
@@ -13,13 +13,13 @@
       ],
       "hint": "用「曰」或「言」关键字定义字符串，再用「曰」或「言」语句输出之。",
       "templateCode": "《试炼》\n  \n",
-      "order": 1
+      "groupOrder": 1
     },
     {
       "id": "echo-input",
       "title": "回响之问",
       "description": "程序接收一个输入，原样输出之。\n\n用「问」语句读取用户输入到一个变量，再用「曰」语句输出该变量。",
-      "difficulty": "easy",
+      "difficultyGroup": "开蒙",
       "category": "入门",
       "testCases": [
         {
@@ -33,7 +33,117 @@
       ],
       "hint": "用「问」语句读取输入，再用「曰」输出。示例：问客子何名。客子曰。",
       "templateCode": "《试炼》\n  \n",
-      "order": 2
+      "groupOrder": 2
+    },
+    {
+      "id": "variable-define",
+      "title": "定义有方",
+      "description": "定义一个字符串变量，并输出之。\n\n文言变量以「数」「言」「物」等后缀标明类型。此题练习字符串变量之定义与输出。",
+      "difficultyGroup": "开蒙",
+      "category": "变量",
+      "testCases": [
+        {
+          "expectedOutput": "诸子雅言"
+        }
+      ],
+      "hint": "定义字符串变量用「曰」关键字，如「名子曰诸子雅言」。然后输出变量名即可。",
+      "templateCode": "《试炼》\n  \n",
+      "groupOrder": 3
+    },
+    {
+      "id": "simple-add",
+      "title": "二数之和",
+      "description": "定义两个数，求其和并输出。\n\n用「数」后缀定义数字变量，用「加」操作求两数之和。",
+      "difficultyGroup": "开蒙",
+      "category": "算术",
+      "testCases": [
+        {
+          "expectedOutput": "八"
+        }
+      ],
+      "hint": "定义两数如「甲数三。乙数五。」，求和用「丙数甲加乙」，然后输出丙。",
+      "templateCode": "《试炼》\n  \n",
+      "groupOrder": 4
+    },
+    {
+      "id": "conditional-basic",
+      "title": "择路而行",
+      "description": "程序读取一个数，若该数为阳（大于零），则输出「阳」，否则输出「阴」。\n\n此题练习判正语句（正/善/阳）和条件跳转（若…则…行《篇章》）。",
+      "difficultyGroup": "院试",
+      "category": "控制流",
+      "testCases": [
+        {
+          "inputs": ["五"],
+          "expectedOutput": "阳"
+        },
+        {
+          "inputs": ["零"],
+          "expectedOutput": "阴"
+        },
+        {
+          "inputs": ["负三"],
+          "expectedOutput": "阴"
+        }
+      ],
+      "templateCode": "《试炼》\n  问客子数。\n  \n《向阳》\n  客子曰阳。\n《向阴》\n  客子曰阴。",
+      "groupOrder": 1
+    },
+    {
+      "id": "list-create",
+      "title": "列队初成",
+      "description": "创建一个列表，包含三个元素，然后依次输出列表中的每个元素。\n\n用「物」后缀定义列表，用「物」索引访问元素。\n\n期望输出三行，每行一个元素。",
+      "difficultyGroup": "院试",
+      "category": "列表",
+      "testCases": [
+        {
+          "expectedOutput": "春日秋月冬雪"
+        }
+      ],
+      "hint": "定义列表如「四季物曰春曰秋曰冬」。输出第一个元素用「四季物一言」。",
+      "templateCode": "《试炼》\n  \n",
+      "groupOrder": 2
+    },
+    {
+      "id": "fizzbuzz-classic",
+      "title": "三舍五入",
+      "description": "输入一个数。若其为三之倍数，则输出「舍」。若其为五之倍数，则输出「入」。若同时为三五之倍数，则输出「舍入」。否则输出原数。\n\n此题综合运用条件判断、算术运算、函数调用。",
+      "difficultyGroup": "殿试",
+      "category": "综合",
+      "testCases": [
+        {
+          "inputs": ["三"],
+          "expectedOutput": "舍"
+        },
+        {
+          "inputs": ["五"],
+          "expectedOutput": "入"
+        },
+        {
+          "inputs": ["十五"],
+          "expectedOutput": "舍入"
+        },
+        {
+          "inputs": ["七"],
+          "expectedOutput": "七"
+        }
+      ],
+      "templateCode": "《试炼》\n  问客子数。\n  \n《舍》\n  客子曰舍。\n《入》\n  客子曰入。\n《舍入》\n  客子曰舍入。",
+      "groupOrder": 1
+    },
+    {
+      "id": "fibonacci",
+      "title": "兔数之列",
+      "description": "输出斐波那契数列之前十项，每项一行。\n\n斐波那契数列：一、一、二、三、五、八、十三、二十一、三十四、五十五。\n\n此题练习循环与列表操作。",
+      "difficultyGroup": "殿试",
+      "category": "算法",
+      "testCases": [
+        {
+          "expectedOutput": "一一二三五八十三二十一三十四五十五"
+        }
+      ],
+      "hint": "可用列表接续（增）操作构建数列，然后逐项输出。亦可使用篇章函数递归。",
+      "templateCode": "《试炼》\n  \n",
+      "groupOrder": 2
     }
   ]
 }

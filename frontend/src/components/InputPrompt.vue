@@ -1,13 +1,23 @@
 <script setup lang="ts">
 import { ref, watch, nextTick } from 'vue'
-import { useProgramStore } from '../stores/program'
 
-const store = useProgramStore()
+const props = withDefaults(defineProps<{
+  visible: boolean
+  promptText: string | null
+  allowEmpty?: boolean
+}>(), {
+  allowEmpty: false,
+})
+
+const emit = defineEmits<{
+  submit: [text: string]
+}>()
+
 const inputText = ref('')
 const inputEl = ref<HTMLInputElement | null>(null)
 
 watch(
-  () => store.isAwaitingInput,
+  () => props.visible,
   async (val) => {
     if (val) {
       inputText.value = ''
@@ -17,22 +27,22 @@ watch(
   },
 )
 
-function submit(): void {
+function handleSubmit(): void {
   const text = inputText.value.trim()
-  if (!text) return
-  store.provideInput(text)
+  if (!text && !props.allowEmpty) return
+  emit('submit', props.allowEmpty ? inputText.value : text)
 }
 </script>
 
 <template>
-  <div v-if="store.isAwaitingInput" class="input-prompt">
+  <div v-if="visible" class="input-prompt">
     <div class="input-header">
       <span class="header-icon">◆</span>
       <span>输入</span>
     </div>
     <div class="input-body">
-      <label v-if="store.inputPrompt" class="input-label">
-        {{ store.inputPrompt }}
+      <label v-if="promptText" class="input-label">
+        {{ promptText }}
       </label>
       <div class="input-row">
         <input
@@ -41,9 +51,9 @@ function submit(): void {
           type="text"
           class="input-field"
           placeholder="在此输入…"
-          @keyup.enter="submit"
+          @keyup.enter="handleSubmit"
         />
-        <button class="input-submit" @click="submit">呈上</button>
+        <button class="input-submit" @click="handleSubmit">呈上</button>
       </div>
     </div>
   </div>
