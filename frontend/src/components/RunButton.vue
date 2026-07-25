@@ -21,15 +21,9 @@ function handleClick(): void {
       @click="handleClick"
     >
       <span v-if="store.isRunning" class="spinner" />
-      {{ store.isRunning ? '取消' : '运行' }}
+      <span v-if="!store.isRunning" class="btn-icon">▶</span>
+      {{ store.isRunning ? '终止' : '运行' }}
     </button>
-    <span class="status-text">
-      <span
-        class="status-dot"
-        :class="store.connectionStatus"
-      />
-      {{ store.connectionStatus === 'connected' ? '已连接' : '未连接' }}
-    </span>
   </div>
 </template>
 
@@ -37,10 +31,10 @@ function handleClick(): void {
 .run-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 16px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  gap: 14px;
+  padding: 10px 16px;
+  background: #fafaf8;
+  border-bottom: 1px solid var(--color-border-light);
   flex-shrink: 0;
 }
 
@@ -48,32 +42,38 @@ function handleClick(): void {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 6px 20px;
+  padding: 7px 22px;
   font-size: 14px;
   font-weight: 600;
+  font-family: var(--font-display);
   color: #fff;
-  background: #1d4ed8;
+  background: var(--color-vermillion);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.2s ease;
+  letter-spacing: 0.05em;
 }
 
 .run-btn:hover:not(:disabled) {
-  background: #1e40af;
+  background: var(--color-vermillion-dark);
 }
 
 .run-btn:disabled {
-  background: #9ca3af;
+  background: var(--color-slate-light);
   cursor: not-allowed;
 }
 
 .run-btn.running {
-  background: #dc2626;
+  background: var(--color-ink-light);
 }
 
 .run-btn.running:hover:not(:disabled) {
-  background: #b91c1c;
+  background: var(--color-ink);
+}
+
+.btn-icon {
+  font-size: 10px;
 }
 
 .spinner {
@@ -88,38 +88,5 @@ function handleClick(): void {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
-}
-
-.status-text {
-  font-size: 12px;
-  color: #6b7280;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #d1d5db;
-}
-
-.status-dot.connected {
-  background: #22c55e;
-}
-
-.status-dot.error {
-  background: #ef4444;
-}
-
-.status-dot.connecting {
-  background: #f59e0b;
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
 }
 </style>

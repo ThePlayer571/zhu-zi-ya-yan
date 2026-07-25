@@ -6,7 +6,6 @@ const store = useProgramStore()
 const inputText = ref('')
 const inputEl = ref<HTMLInputElement | null>(null)
 
-/** 当进入等待输入状态时自动聚焦输入框。 */
 watch(
   () => store.isAwaitingInput,
   async (val) => {
@@ -27,7 +26,10 @@ function submit(): void {
 
 <template>
   <div v-if="store.isAwaitingInput" class="input-prompt">
-    <div class="input-header">输入</div>
+    <div class="input-header">
+      <span class="header-icon">◆</span>
+      <span>输入</span>
+    </div>
     <div class="input-body">
       <label v-if="store.inputPrompt" class="input-label">
         {{ store.inputPrompt }}
@@ -38,10 +40,10 @@ function submit(): void {
           v-model="inputText"
           type="text"
           class="input-field"
-          placeholder="在此输入..."
+          placeholder="在此输入…"
           @keyup.enter="submit"
         />
-        <button class="input-submit" @click="submit">输入</button>
+        <button class="input-submit" @click="submit">呈上</button>
       </div>
     </div>
   </div>
@@ -49,29 +51,38 @@ function submit(): void {
 
 <style scoped>
 .input-prompt {
-  border-top: 2px solid #f59e0b;
+  border-top: 2px solid var(--color-gold);
   flex-shrink: 0;
 }
 
 .input-header {
-  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
   font-size: 13px;
   font-weight: 600;
-  color: #d97706;
-  background: #fffbeb;
-  border-bottom: 1px solid #fde68a;
+  color: var(--color-gold);
+  background: #fdfcf7;
+  border-bottom: 1px solid var(--color-border-light);
+  font-family: var(--font-display);
+}
+
+.header-icon {
+  font-size: 10px;
 }
 
 .input-body {
-  padding: 10px 12px;
-  background: #fffbeb;
+  padding: 12px 16px;
+  background: #fdfcf7;
 }
 
 .input-label {
   display: block;
   font-size: 14px;
-  color: #92400e;
-  margin-bottom: 6px;
+  color: var(--color-ink-light);
+  margin-bottom: 8px;
+  font-family: var(--font-display);
 }
 
 .input-row {
@@ -81,30 +92,35 @@ function submit(): void {
 
 .input-field {
   flex: 1;
-  padding: 6px 10px;
-  font-size: 15px;
-  border: 1px solid #d1d5db;
-  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 16px;
+  font-family: var(--font-code);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
   outline: none;
+  background: #fff;
+  color: var(--color-ink);
 }
 
 .input-field:focus {
-  border-color: #f59e0b;
-  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.15);
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.12);
 }
 
 .input-submit {
-  padding: 6px 16px;
+  padding: 8px 18px;
   font-size: 14px;
   font-weight: 600;
+  font-family: var(--font-display);
   color: #fff;
-  background: #d97706;
+  background: var(--color-gold);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: background 0.2s;
 }
 
 .input-submit:hover {
-  background: #b45309;
+  background: var(--color-gold-light);
 }
 </style>

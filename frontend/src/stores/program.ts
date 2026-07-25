@@ -19,9 +19,7 @@ export const useProgramStore = defineStore('program', () => {
   // ---- 计算属性 --------------------------------------------------------
 
   const canRun = computed(() =>
-    sourceCode.value.trim().length > 0 &&
-    connectionStatus.value === 'connected' &&
-    !isRunning.value
+    sourceCode.value.trim().length > 0 && !isRunning.value
   )
 
   const canCancel = computed(() => isRunning.value)
@@ -74,7 +72,10 @@ export const useProgramStore = defineStore('program', () => {
 
   /** 运行程序。 */
   async function runProgram(): Promise<void> {
-    if (!canRun.value || !wsClient) return
+    if (!wsClient) return
+    const code = sourceCode.value.trim()
+    if (!code) return
+    if (isRunning.value) return
 
     // 重置状态
     output.value = []
@@ -82,14 +83,17 @@ export const useProgramStore = defineStore('program', () => {
     isAwaitingInput.value = false
     inputPrompt.value = null
 
-    // 如果连接断开，先重连
+    // 如果连接断开，先重连（包括取消后的重连）
     if (!wsClient.isConnected) {
       await connect()
-      if (!wsClient.isConnected) return
+      if (!wsClient.isConnected) {
+        output.value.push('[错误] 无法连接到服务器，请确认后端已启动')
+        return
+      }
     }
 
     isRunning.value = true
-    wsClient.sendSourceCode(sourceCode.value)
+    wsClient.sendSourceCode(code)
   }
 
   /** 取消运行。关闭 WebSocket 连接。 */

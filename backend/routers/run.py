@@ -1,12 +1,14 @@
-"""REST API 路由：POST /api/run。
+"""REST API 路由：POST /api/run 和 POST /api/run-test。
 
 非交互式运行程序。如果源码包含输入语句，返回 requires_input 标记。
+run-test 端点支持带输入的程序测试（用于闯关系统）。
 """
 
 from fastapi import APIRouter
 
-from backend.models.schemas import RunRequest, RunResponse
+from backend.models.schemas import RunRequest, RunResponse, RunTestRequest, RunTestResponse
 from backend.services.runner import run_program
+from backend.services.list_io import ListInputIO
 
 
 class _NonInteractiveIO:
@@ -62,6 +64,32 @@ async def run_endpoint(request: RunRequest):
     entries = run_program(source_code, io_strategy)
 
     return RunResponse(
+        success=True,
+        output=io_strategy.outputs,
+        trace={"entries": entries},
+    )
+
+
+@router.post("/api/run-test", response_model=RunTestResponse)
+async def run_test_endpoint(request: RunTestRequest):
+    """带输入的测试运行端点。
+
+    使用 ListInputIO 策略，按顺序将 request.inputs 提供给程序的输入语句。
+    适用于闯关系统中需要验证输入/输出行为的测试用例。
+    """
+    source_code = request.source_code.strip()
+
+    if not source_code:
+        return RunTestResponse(
+            success=True,
+            output=[],
+            trace={"entries": []},
+        )
+
+    io_strategy = ListInputIO(request.inputs)
+    entries = run_program(source_code, io_strategy)
+
+    return RunTestResponse(
         success=True,
         output=io_strategy.outputs,
         trace={"entries": entries},

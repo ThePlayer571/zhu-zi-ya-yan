@@ -61,3 +61,52 @@ export interface WsInputMessage {
 
 /** 客户端 → 服务器的所有消息联合类型。 */
 export type WsClientMessage = WsRunMessage | WsInputMessage
+
+// ---- 闯关系统类型 ------------------------------------------------------
+
+/** 难度等级。 */
+export type Difficulty = 'easy' | 'medium' | 'hard'
+
+/** 单个测试用例。 */
+export interface TestCase {
+  inputs?: string[]
+  expectedOutput: string
+}
+
+/** 单个关卡定义（来自 JSON 文件）。 */
+export interface ChallengeLevel {
+  id: string
+  title: string
+  description: string
+  difficulty: Difficulty
+  category: string
+  testCases: TestCase[]
+  hint?: string
+  templateCode?: string
+  order?: number
+}
+
+/** 关卡列表 JSON 文件的顶层结构。 */
+export interface ChallengeIndex {
+  levels: ChallengeLevel[]
+}
+
+/** 关卡完成状态。 */
+export type LevelStatus = 'locked' | 'unlocked' | 'completed'
+
+/** REST API 运行响应。 */
+export interface RunResponse {
+  success: boolean
+  output: string[]
+  trace: { entries: TraceEntry[] }
+  error?: string | null
+  requires_input?: boolean | null
+}
+
+/** POST /api/run-test 响应。 */
+export interface RunTestResponse {
+  success: boolean
+  output: string[]
+  trace: { entries: TraceEntry[] }
+  error?: string | null
+}

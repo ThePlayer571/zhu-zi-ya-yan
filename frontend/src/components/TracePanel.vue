@@ -3,20 +3,28 @@ import { ref, computed } from 'vue'
 import { useProgramStore } from '../stores/program'
 import type { TraceEntry } from '../types'
 
+const props = withDefaults(defineProps<{
+  alwaysOpen?: boolean
+}>(), {
+  alwaysOpen: false,
+})
+
 const store = useProgramStore()
 const isExpanded = ref(false)
 
 const hasEntries = computed(() => store.traceEntries.length > 0)
 
 function toggle(): void {
+  if (props.alwaysOpen) return
   isExpanded.value = !isExpanded.value
 }
 
-/** 格式化单条记录，返回经注疏文本行数组。 */
+/** 是否显示正文内容 */
+const showBody = computed(() => props.alwaysOpen || isExpanded.value)
+
 function formatEntry(entry: TraceEntry): string[] {
   const lines: string[] = []
 
-  // 函数进入/退出使用简单格式
   if (entry.statement_name === '起章') {
     lines.push(`起${entry.details['函数名'] ?? ''}`)
     return lines
@@ -26,7 +34,6 @@ function formatEntry(entry: TraceEntry): string[] {
     return lines
   }
 
-  // 经注疏格式
   if (entry.source_code) {
     lines.push(`【经】${entry.source_code}`)
   }
@@ -35,7 +42,6 @@ function formatEntry(entry: TraceEntry): string[] {
     lines.push(`【疏】${entry.change}`)
   }
 
-  // 注解
   for (const [key, content] of Object.entries(entry.annotations)) {
     lines.push(`【${key}】${content}`)
   }
@@ -45,9 +51,14 @@ function formatEntry(entry: TraceEntry): string[] {
 </script>
 
 <template>
-  <div class="trace-panel">
-    <button class="trace-toggle" @click="toggle">
-      查看复盘
+  <div class="trace-panel" :class="{ 'full-height': alwaysOpen }">
+    <!-- 仅在非 alwaysOpen 模式下显示折叠按钮 -->
+    <button
+      v-if="!alwaysOpen"
+      class="trace-toggle"
+      @click="toggle"
+    >
+      <span class="toggle-label">经注疏</span>
       <span class="toggle-icon">{{ isExpanded ? '▾' : '▸' }}</span>
       <span
         v-if="hasEntries && !isExpanded"
@@ -57,7 +68,7 @@ function formatEntry(entry: TraceEntry): string[] {
       </span>
     </button>
 
-    <div v-if="isExpanded" class="trace-body">
+    <div v-if="showBody" class="trace-body">
       <template v-if="hasEntries">
         <div
           v-for="(entry, i) in store.traceEntries"
@@ -85,7 +96,7 @@ function formatEntry(entry: TraceEntry): string[] {
         </div>
       </template>
       <div v-else class="trace-empty">
-        无执行记录
+        尚无执行记录
       </div>
     </div>
   </div>
@@ -93,28 +104,38 @@ function formatEntry(entry: TraceEntry): string[] {
 
 <style scoped>
 .trace-panel {
-  border-top: 1px solid #e5e7eb;
   flex-shrink: 0;
+}
+
+.trace-panel.full-height {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-top: none;
 }
 
 .trace-toggle {
   width: 100%;
-  padding: 8px 12px;
+  padding: 9px 16px;
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
-  background: #f9fafb;
+  color: var(--color-slate);
+  background: #fafaf8;
   border: none;
-  border-bottom: 1px solid #e5e7eb;
+  border-top: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
   cursor: pointer;
   text-align: left;
   display: flex;
   align-items: center;
   gap: 6px;
+  font-family: var(--font-display);
+  transition: background 0.15s;
 }
 
 .trace-toggle:hover {
-  background: #f3f4f6;
+  background: #f5f2ec;
 }
 
 .toggle-icon {
@@ -123,18 +144,24 @@ function formatEntry(entry: TraceEntry): string[] {
 
 .entry-count {
   font-weight: 400;
-  color: #9ca3af;
+  color: var(--color-slate-light);
+  font-family: var(--font-body);
 }
 
 .trace-body {
-  max-height: 300px;
+  flex: 1;
   overflow-y: auto;
-  padding: 10px 12px;
-  background: #fafafa;
-  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'SimSun', serif;
+  padding: 14px 16px;
+  background: #fafaf8;
+  font-family: var(--font-display);
   font-size: 14px;
-  line-height: 1.7;
-  color: #374151;
+  line-height: 1.9;
+  color: var(--color-ink);
+}
+
+.trace-panel:not(.full-height) .trace-body {
+  max-height: 260px;
+  flex: none;
 }
 
 .trace-entry {
@@ -148,42 +175,42 @@ function formatEntry(entry: TraceEntry): string[] {
 .trace-func {
   font-weight: 700;
   font-size: 15px;
-  color: #1f2937;
+  color: var(--color-ink);
   padding: 4px 0;
 }
 
 .trace-jing {
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-ink);
 }
 
 .trace-zhu {
-  color: #4b5563;
+  color: var(--color-ink-light);
   padding-left: 8px;
 }
 
 .trace-shu {
-  color: #6b7280;
+  color: var(--color-slate);
   padding-left: 8px;
   font-size: 13px;
 }
 
 .trace-annotation {
-  color: #9ca3af;
+  color: var(--color-slate-light);
   padding-left: 4px;
   font-size: 12px;
 }
 
 .trace-separator {
   height: 1px;
-  background: #e5e7eb;
+  background: var(--color-border-light);
   margin: 6px 0;
 }
 
 .trace-empty {
-  color: #d1d5db;
+  color: #d1cbc0;
   font-style: italic;
   text-align: center;
-  padding: 16px 0;
+  padding: 40px 0;
 }
 </style>

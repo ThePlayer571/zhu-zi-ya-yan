@@ -206,8 +206,9 @@ from zhuziyayan.program_system.io_strategy import PythonNativeIO
 
 ### 工具链
 
-- **Vite 5** — 构建工具，HMR 开发服务器
+- **Vite** — 构建工具，HMR 开发服务器
 - **Vue 3** — Composition API（`<script setup lang="ts">`）
+- **Vue Router 4** — 客户端路由（两个页面：主页 + 闯关）
 - **TypeScript** — 严格模式
 - **Pinia** — 状态管理
 
@@ -219,39 +220,92 @@ frontend/
 ├── package.json
 ├── vite.config.ts
 ├── tsconfig.json
+├── public/
+│   ├── favicon.svg
+│   └── challenges/
+│       ├── index.json          # 关卡定义文件
+│       └── README.md           # 关卡添加指南
 └── src/
-    ├── main.ts                # 入口：创建 app、注册 Pinia
-    ├── App.vue                # 根组件：两栏布局
+    ├── main.ts                 # 入口：创建 app、注册 Pinia、注册 Router
+    ├── App.vue                 # 根组件：仅 <RouterView />
+    ├── style.css               # 全局样式 + CSS 变量（古雅色调）
+    ├── router/
+    │   └── index.ts            # 路由配置（/、/challenge、/challenge/:id）
     ├── api/
-    │   └── websocket.ts       # ProgramWebSocket 客户端封装
+    │   └── websocket.ts        # ProgramWebSocket 客户端封装
     ├── stores/
-    │   └── program.ts         # Pinia store：源码、输出、输入状态、复盘
+    │   ├── program.ts          # 主页编辑器 store：源码、输出、输入状态、复盘
+    │   └── challenge.ts        # 闯关 store：关卡数据、完成状态、运行比对
     ├── components/
-    │   ├── CodeEditor.vue     # 源码编辑器（textarea，monospace）
-    │   ├── RunButton.vue      # 运行 / 取消按钮
-    │   ├── OutputDisplay.vue  # 输出日志滚动区
-    │   ├── InputPrompt.vue    # 输入提示（条件显示，等待输入时出现）
-    │   └── TracePanel.vue     # 经注疏复盘面板（可折叠）
+    │   ├── HomeHero.vue         # 主页英雄区：logo、设计哲学、滚动按钮
+    │   ├── HomeEditor.vue       # 主页编辑器壳：组合 CodeEditor + RunButton + Output + Input + Trace
+    │   ├── CodeEditor.vue       # 源码编辑器（textarea）
+    │   ├── RunButton.vue        # 运行 / 终止按钮 + 连接状态
+    │   ├── OutputDisplay.vue    # 输出日志滚动区（古风样式）
+    │   ├── InputPrompt.vue      # 输入提示（条件显示，等待输入时出现）
+    │   ├── TracePanel.vue       # 经注疏复盘面板（可折叠）
+    │   ├── ChallengeEntry.vue   # 闯关入口区（按钮跳转 /challenge）
+    │   └── SiteFooter.vue       # 页脚：GitHub 项目链接、作者链接、B 站链接
+    ├── views/
+    │   ├── HomePage.vue         # 主页：Hero + Editor + ChallengeEntry + Footer
+    │   ├── ChallengeSelect.vue  # 关卡选择页：卡片网格
+    │   └── ChallengeLevel.vue   # 关卡页：LeetCode 风格（左题目 + 右编辑器）
     └── types/
-        └── index.ts           # TypeScript 接口定义
+        └── index.ts            # TypeScript 接口定义（含闯关类型）
 ```
 
-### 组件树
+### 路由
+
+| 路径               | 视图               | 说明               |
+|--------------------|--------------------|--------------------|
+| `/`                | `HomePage`         | 主页（英雄区 + 编辑器 + 闯关入口） |
+| `/challenge`       | `ChallengeSelect`  | 关卡选择列表        |
+| `/challenge/:id`   | `ChallengeLevel`   | 单关挑战（LeetCode 布局） |
+
+### 页面布局
+
+#### 主页（HomePage）
 
 ```
-App.vue
-├── RunButton.vue          # 工具栏：运行/取消 + 连接状态指示
-├── CodeEditor.vue         # 左栏：源码输入
-├── OutputDisplay.vue      # 右栏上：输出日志（自动滚底）
-├── InputPrompt.vue        # 右栏中：条件显示（仅 isAwaitingInput 时）
-└── TracePanel.vue         # 右栏下：可折叠复盘面板
+HomePage.vue
+├── HomeHero.vue             # 100vh：暗色背景 + 诸子雅言印章 logo + 三种设计哲学 + "试之"滚动按钮
+├── HomeEditor.vue           # 100vh：代码编辑器区（一屏可见，无需滚动）
+│   ├── RunButton.vue        #   工具栏
+│   ├── CodeEditor.vue       #   左 50%：源码 textarea
+│   ├── OutputDisplay.vue    #   右上：输出日志
+│   ├── InputPrompt.vue      #   右下：输入提示（条件渲染）
+│   └── TracePanel.vue       #   底部：经注疏复盘（可折叠）
+├── ChallengeEntry.vue       # 40vh："闯关试炼"入口按钮 → /challenge
+└── SiteFooter.vue           # 页脚链接
 ```
 
-### Store 结构（program.ts）
+#### 闯关选择（ChallengeSelect）
+
+顶栏（返回按钮 + 标题 + 已通 N/M 关） + 关卡卡片网格。每张卡片显示分类、标题、难度标签、完成状态。
+
+#### 关卡页（ChallengeLevel）
+
+LeetCode 风格两栏布局：
+- **左栏 45%**：题目描述、测试用例（期望输出）、提示（可展开）
+- **右栏 55%**：代码编辑器（textarea）+ 提交运行按钮 + 结果面板（通过/未通过、实际输出 vs 期望输出）
+
+代码运行通过 `POST /api/run` REST API（非交互式），输出与测试用例精确匹配后标记为完成。完成状态保存在 `localStorage`。
+
+### Store 结构
+
+#### program.ts（主页编辑器）
 
 - **State**: `sourceCode`, `output[]`, `isRunning`, `isAwaitingInput`, `inputPrompt`, `traceEntries[]`, `connectionStatus`
 - **Actions**: `connect()`, `runProgram()`, `cancelProgram()`, `provideInput(text)`, `resetOutput()`
-- **约定**: 始终使用 WebSocket 通信（统一处理交互/非交互程序）
+- **通信**: WebSocket `/ws/run`（支持交互式 I/O）
+
+#### challenge.ts（闯关系统）
+
+- **State**: `levels[]`, `completedIds` (Set), `loading`, `loadError`, `currentLevel`, `currentCode`, `isRunning`, `runResult`
+- **Computed**: `levelsWithStatus`, `completedCount`, `totalCount`
+- **Actions**: `loadLevels()`, `setCurrentLevel(level)`, `runChallenge()`, `getHint()`
+- **通信**: REST `POST /api/run`（非交互式，纯输出比对）
+- **持久化**: 完成状态保存在 `localStorage`（key: `zhuziyayan-challenge-completed`）
 
 ### WebSocket 客户端
 
@@ -263,6 +317,28 @@ App.vue
 - `onError(message)` — 错误
 - `onDisconnect()` — 连接断开
 - `onStatusChange(status)` — 连接状态变化
+
+### 关卡 JSON 格式
+
+关卡文件位于 `public/challenges/index.json`，格式见 `public/challenges/README.md`。核心字段：
+
+```json
+{
+  "levels": [{
+    "id": "hello-world",
+    "title": "你好世界",
+    "description": "题目描述（支持 \\n 换行）",
+    "difficulty": "easy|medium|hard",
+    "category": "分类标签",
+    "testCases": [{ "expectedOutput": "期望输出文本" }],
+    "hint": "提示文本（可选）",
+    "templateCode": "《篇章》\n  \n",
+    "order": 1
+  }]
+}
+```
+
+添加关卡只需编辑 `index.json` 文件，无需修改代码。
 
 ### 开发命令
 
@@ -293,6 +369,7 @@ backend/
 └── services/
     ├── __init__.py
     ├── web_io.py          # ThreadedIOStrategy（queue + event 桥接）
+    ├── list_io.py         # ListInputIO（预置输入列表驱动，用于闯关测试）
     └── runner.py          # run_program() 执行逻辑封装
 ```
 
@@ -309,6 +386,14 @@ backend/
 响应：`{"success": true, "output": ["五"], "trace": {"entries": [...]}}`
 
 如果源码包含输入语句（问/询/质/听/闻），返回 `requires_input: true` 提示使用 WebSocket。
+
+#### POST `/api/run-test` — 带输入的测试执行
+
+请求：`{"source_code": "《试炼》问客子。客子曰。", "inputs": ["李白"]}`
+
+响应：`{"success": true, "output": ["李白"], "trace": {"entries": [...]}}`
+
+使用 `ListInputIO` 策略，将 `inputs` 数组按顺序注入程序的输入语句。每个测试用例独立运行一次程序。用于闯关系统验证输入/输出行为。
 
 #### WebSocket `/ws/run` — 交互式执行
 

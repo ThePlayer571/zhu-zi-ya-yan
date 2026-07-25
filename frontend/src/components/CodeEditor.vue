@@ -6,11 +6,14 @@ const store = useProgramStore()
 
 <template>
   <div class="code-editor">
-    <div class="editor-header">源码</div>
+    <div class="editor-header">
+      <span class="header-icon">◈</span>
+      <span>源码</span>
+    </div>
     <textarea
       v-model="store.sourceCode"
       :disabled="store.isRunning"
-      placeholder="在此输入文言源码..."
+      placeholder="在此输入文言源码…"
       spellcheck="false"
       class="editor-textarea"
     />
@@ -22,38 +25,49 @@ const store = useProgramStore()
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: #fff;
 }
 
 .editor-header {
-  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--color-slate);
+  background: #fafaf8;
+  border-bottom: 1px solid var(--color-border-light);
   flex-shrink: 0;
+  font-family: var(--font-display);
+}
+
+.header-icon {
+  color: var(--color-gold);
+  font-size: 10px;
 }
 
 .editor-textarea {
   flex: 1;
   width: 100%;
-  padding: 12px;
+  padding: 16px;
   border: none;
   outline: none;
   resize: none;
-  font-family: 'Noto Sans SC', 'Source Han Sans SC', 'Microsoft YaHei', monospace;
-  font-size: 16px;
-  line-height: 1.8;
-  color: #1f2937;
+  font-family: var(--font-code);
+  font-size: 17px;
+  line-height: 2;
+  color: var(--color-ink);
   background: #fff;
 }
 
 .editor-textarea:disabled {
-  background: #f3f4f6;
-  color: #9ca3af;
+  background: #fafaf8;
+  color: var(--color-slate-light);
 }
 
 .editor-textarea::placeholder {
-  color: #c4c4c4;
+  color: #c4c0b8;
+  font-style: italic;
 }
 </style>

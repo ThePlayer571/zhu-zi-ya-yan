@@ -1,0 +1,39 @@
+{
+  "levels": [
+    {
+      "id": "hello-world",
+      "title": "你好世界",
+      "description": "输出「你好世界」四个字。\n\n此为入门之题，只需令程序输出「你好世界」即可通关。",
+      "difficulty": "easy",
+      "category": "入门",
+      "testCases": [
+        {
+          "expectedOutput": "你好世界"
+        }
+      ],
+      "hint": "用「曰」或「言」关键字定义字符串，再用「曰」或「言」语句输出之。",
+      "templateCode": "《试炼》\n  \n",
+      "order": 1
+    },
+    {
+      "id": "echo-input",
+      "title": "回响之问",
+      "description": "程序接收一个输入，原样输出之。\n\n用「问」语句读取用户输入到一个变量，再用「曰」语句输出该变量。",
+      "difficulty": "easy",
+      "category": "入门",
+      "testCases": [
+        {
+          "inputs": ["春日"],
+          "expectedOutput": "春日"
+        },
+        {
+          "inputs": ["秋月"],
+          "expectedOutput": "秋月"
+        }
+      ],
+      "hint": "用「问」语句读取输入，再用「曰」输出。示例：问客子何名。客子曰。",
+      "templateCode": "《试炼》\n  \n",
+      "order": 2
+    }
+  ]
+}

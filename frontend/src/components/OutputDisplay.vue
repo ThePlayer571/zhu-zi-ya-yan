@@ -5,7 +5,6 @@ import { useProgramStore } from '../stores/program'
 const store = useProgramStore()
 const scrollContainer = ref<HTMLElement | null>(null)
 
-/** 当有新输出时自动滚到底部。 */
 watch(
   () => store.output.length,
   async () => {
@@ -19,7 +18,10 @@ watch(
 
 <template>
   <div class="output-display">
-    <div class="output-header">输出</div>
+    <div class="output-header">
+      <span class="header-icon">◇</span>
+      <span>输出</span>
+    </div>
     <div ref="scrollContainer" class="output-body">
       <template v-if="store.output.length > 0">
         <div
@@ -31,7 +33,7 @@ watch(
         </div>
       </template>
       <div v-else class="output-placeholder">
-        程序输出将显示于此...
+        程序输出将显示于此…
       </div>
     </div>
   </div>
@@ -46,37 +48,48 @@ watch(
 }
 
 .output-header {
-  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
   font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  color: var(--color-slate);
+  background: #fafaf8;
+  border-bottom: 1px solid var(--color-border-light);
   flex-shrink: 0;
+  font-family: var(--font-display);
+}
+
+.header-icon {
+  color: var(--color-gold);
+  font-size: 10px;
 }
 
 .output-body {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
-  background: #fffbeb;
-  font-family: 'Noto Serif SC', 'Source Han Serif SC', 'SimSun', serif;
-  font-size: 16px;
-  line-height: 1.8;
-  color: #1f2937;
+  padding: 14px 16px;
+  background: #fdfcf7;
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 2;
+  color: var(--color-ink);
 }
 
 .output-line {
-  padding: 2px 0;
+  padding: 1px 0;
 }
 
 .output-line::before {
-  content: '》 ';
-  color: #9ca3af;
+  content: '》';
+  color: var(--color-slate-light);
+  margin-right: 6px;
+  font-size: 14px;
 }
 
 .output-placeholder {
-  color: #d1d5db;
+  color: #d1cbc0;
   font-style: italic;
 }
 </style>

@@ -43,3 +43,33 @@ class RunResponse(BaseModel):
     trace: dict  # {"entries": [...]}
     error: str | None = None
     requires_input: bool | None = None
+
+
+class RunTestRequest(BaseModel):
+    """POST /api/run-test 请求体。
+
+    支持带输入的程序测试，用于闯关系统。
+
+    Attributes:
+        source_code: 文言源代码文本。
+        inputs: 按顺序提供给程序的输入列表。
+    """
+
+    source_code: str
+    inputs: list[str] = []
+
+
+class RunTestResponse(BaseModel):
+    """POST /api/run-test 响应体。
+
+    Attributes:
+        success: 是否执行完成。
+        output: 程序输出行的列表。
+        trace: 执行记录的序列化。
+        error: 错误信息（如有）。
+    """
+
+    success: bool
+    output: list[str]
+    trace: dict
+    error: str | None = None
