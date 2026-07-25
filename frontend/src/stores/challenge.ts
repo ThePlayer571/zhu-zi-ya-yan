@@ -15,7 +15,7 @@ import type {
   SubmitResult,
 } from '../types'
 
-const API_BASE = 'http://localhost:8000'
+const API_BASE = ''
 const COMPLETED_STORAGE_KEY = 'zhuziyayan-challenge-completed'
 const CODE_STORAGE_PREFIX = 'zhuziyayan-challenge-code-'
 
@@ -60,7 +60,9 @@ export const useChallengeStore = defineStore('challenge', () => {
 
   function getWsUrl(): string {
     const envUrl: string | undefined = (import.meta as unknown as { env: Record<string, string> }).env?.VITE_WS_URL
-    return envUrl ?? 'ws://localhost:8000/ws/run'
+    if (envUrl) return envUrl
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    return `${protocol}//${window.location.host}/ws/run`
   }
 
   // ---- 计算属性 --------------------------------------------------------

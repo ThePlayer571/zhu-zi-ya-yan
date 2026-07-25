@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>开发者工具 · 清除存档</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #1a1410;
+    --ink-light: #5c5348;
+    --slate: #8b8478;
+    --slate-light: #b0a99c;
+    --paper: #f5f2ec;
+    --border: #e0dbd0;
+    --vermillion: #c41e3a;
+    --jade: #5b8c5a;
+    --gold: #b8860b;
+    --font-display: 'Noto Serif SC', 'Source Han Serif SC', 'SimSun', 'STSong', serif;
+    --font-body: 'Noto Serif SC', 'Source Han Serif SC', 'SimSun', 'STSong', serif;
+  }
+
+  body {
+    font-family: var(--font-body);
+    background: linear-gradient(180deg, var(--paper) 0%, #ede6d8 100%);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+  }
+
+  .card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-width: 600px;
+    width: 100%;
+    padding: 40px;
+    box-shadow: 0 4px 24px rgba(26,20,16,0.06);
+  }
+
+  .card-header {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+
+  .card-header h1 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+
+  .card-header .subtitle {
+    font-size: 13px;
+    color: var(--slate-light);
+    font-family: var(--font-display);
+  }
+
+  .section {
+    margin-bottom: 28px;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink-light);
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--vermillion);
+    display: inline-block;
+    margin-bottom: 12px;
+    letter-spacing: 0.1em;
+  }
+
+  .data-list {
+    list-style: none;
+    font-size: 13px;
+  }
+
+  .data-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #fafaf8;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 4px;
+    word-break: break-all;
+    gap: 12px;
+  }
+
+  .data-list .key {
+    color: var(--ink-light);
+    font-family: var(--font-display);
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+
+  .data-list .value {
+    color: var(--slate);
+    text-align: right;
+    font-size: 12px;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .empty-hint {
+    font-size: 13px;
+    color: var(--slate-light);
+    font-style: italic;
+    padding: 8px 12px;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 20px;
+    border: 1px solid;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-clear-all {
+    background: var(--vermillion);
+    color: #fff;
+    border-color: var(--vermillion);
+  }
+  .btn-clear-all:hover { background: #a01830; }
+
+  .btn-clear-completed {
+    background: #fff;
+    color: var(--gold);
+    border-color: var(--gold);
+  }
+  .btn-clear-completed:hover { background: rgba(184,134,11,0.06); }
+
+  .btn-clear-code {
+    background: #fff;
+    color: var(--slate);
+    border-color: var(--slate-light);
+  }
+  .btn-clear-code:hover { background: rgba(0,0,0,0.03); }
+
+  .btn-refresh {
+    background: #fff;
+    color: var(--jade);
+    border-color: var(--jade);
+    margin-left: auto;
+  }
+  .btn-refresh:hover { background: rgba(91,140,90,0.06); }
+
+  .toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 28px;
+    border-radius: 6px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    z-index: 999;
+  }
+  .toast.show { opacity: 1; }
+  .toast.success { background: #d4edda; color: #2d5a3b; border: 1px solid #b8d9be; }
+  .toast.info { background: #d6e4f0; color: #2c4a6e; border: 1px solid #b8cfe0; }
+
+  .dev-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 10px;
+    color: var(--vermillion);
+    background: rgba(196,30,58,0.08);
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="card-header">
+    <span class="dev-badge">开发者工具</span>
+    <h1>清除存档</h1>
+    <p class="subtitle">闯关试炼 · localStorage 管理</p>
+  </div>
+
+  <!-- 完成记录 -->
+  <div class="section">
+    <h2 class="section-title">通关记录</h2>
+    <ul id="completed-list" class="data-list"></ul>
+  </div>
+
+  <!-- 代码草稿 -->
+  <div class="section">
+    <h2 class="section-title">代码草稿</h2>
+    <ul id="code-list" class="data-list"></ul>
+  </div>
+
+  <!-- 操作按钮 -->
+  <div class="actions">
+    <button class="btn btn-clear-all" onclick="clearAll()">清除全部</button>
+    <button class="btn btn-clear-completed" onclick="clearCompleted()">清除通关记录</button>
+    <button class="btn btn-clear-code" onclick="clearCodeDrafts()">清除代码草稿</button>
+    <button class="btn btn-refresh" onclick="refresh()">刷新</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+  const COMPLETED_KEY = 'zhuziyayan-challenge-completed'
+  const CODE_PREFIX = 'zhuziyayan-challenge-code-'
+
+  function getCompletedIds() {
+    try {
+      const raw = localStorage.getItem(COMPLETED_KEY)
+      return raw ? JSON.parse(raw) : []
+    } catch { return [] }
+  }
+
+  function getCodeKeys() {
+    const keys = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i)
+      if (k && k.startsWith(CODE_PREFIX)) keys.push(k)
+    }
+    return keys.sort()
+  }
+
+  function render() {
+    // 通关记录
+    const completedList = document.getElementById('completed-list')
+    const ids = getCompletedIds()
+    if (ids.length === 0) {
+      completedList.innerHTML = '<li class="empty-hint">无通关记录</li>'
+    } else {
+      completedList.innerHTML = ids.map(id =>
+        `<li><span class="key">${esc(id)}</span><span class="value">✓ 已通关</span></li>`
+      ).join('')
+    }
+
+    // 代码草稿
+    const codeList = document.getElementById('code-list')
+    const codeKeys = getCodeKeys()
+    if (codeKeys.length === 0) {
+      codeList.innerHTML = '<li class="empty-hint">无代码草稿</li>'
+    } else {
+      codeList.innerHTML = codeKeys.map(k => {
+        const id = k.slice(CODE_PREFIX.length)
+        const val = localStorage.getItem(k) || ''
+        const preview = val.length > 40 ? val.slice(0, 40) + '…' : val
+        return `<li><span class="key">${esc(id)}</span><span class="value">${esc(preview)}</span></li>`
+      }).join('')
+    }
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  }
+
+  function toast(msg, type) {
+    const el = document.getElementById('toast')
+    el.textContent = msg
+    el.className = 'toast ' + type + ' show'
+    setTimeout(() => { el.className = 'toast' }, 2000)
+  }
+
+  function clearAll() {
+    localStorage.removeItem(COMPLETED_KEY)
+    getCodeKeys().forEach(k => localStorage.removeItem(k))
+    toast('已清除全部存档', 'success')
+    render()
+  }
+
+  function clearCompleted() {
+    localStorage.removeItem(COMPLETED_KEY)
+    toast('已清除通关记录', 'success')
+    render()
+  }
+
+  function clearCodeDrafts() {
+    getCodeKeys().forEach(k => localStorage.removeItem(k))
+    toast('已清除代码草稿', 'info')
+    render()
+  }
+
+  function refresh() {
+    render()
+    toast('已刷新', 'info')
+  }
+
+  render()
+</script>
+
+</body>
+</html>

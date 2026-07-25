@@ -1,7 +1,10 @@
 import type { WsServerMessage, WsClientMessage, TraceEntry } from '../types'
 
-/** 默认 WebSocket 服务器地址。可通过 VITE_WS_URL 环境变量覆盖。 */
-const DEFAULT_WS_URL = 'ws://localhost:8000/ws/run'
+/** 根据当前页面协议和主机自动生成 WebSocket 地址。可通过 VITE_WS_URL 环境变量覆盖。 */
+function getDefaultWsUrl(): string {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  return `${protocol}//${window.location.host}/ws/run`
+}
 
 /** WebSocket 客户端回调接口。 */
 export interface WsCallbacks {
@@ -21,7 +24,7 @@ export class ProgramWebSocket {
   private url: string
 
   constructor(url?: string) {
-    this.url = url ?? DEFAULT_WS_URL
+    this.url = url ?? getDefaultWsUrl()
   }
 
   /** 连接到服务器。返回 Promise，连接成功后 resolve。 */

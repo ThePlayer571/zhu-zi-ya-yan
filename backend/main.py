@@ -4,8 +4,12 @@
     python backend/main.py
     或
     uvicorn backend.main:app --reload
+
+部署到 Render 时使用：
+    uvicorn backend.main:app --host 0.0.0.0 --port $PORT
 """
 
+import os
 import sys
 from pathlib import Path
 
@@ -20,22 +24,33 @@ for _p in (str(_project_root), str(_src_path)):
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from backend.routers import run, ws
 
 app = FastAPI(title="诸子雅言 API", version="1.0.0")
 
-# CORS：允许 Vite 开发服务器跨域访问
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# CORS：允许跨域访问。默认允许 Vite 开发服务器，生产环境可通过 CORS_ORIGINS 环境变量配置
+# 同源部署时无需 CORS，空字符串表示仅允许同源
+_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")
+_origins = [o.strip() for o in _origins if o.strip()]
+if _origins:
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 app.include_router(run.router)
 app.include_router(ws.router)
+
+# 挂载前端静态文件（生产环境：后端统一服务前后端）
+# API 路由优先匹配，未匹配的请求回退到前端 SPA
+_frontend_dist = _project_root / "frontend" / "dist"
+if _frontend_dist.exists():
+    app.mount("/", StaticFiles(directory=str(_frontend_dist), html=True), name="frontend")
 
 
 if __name__ == "__main__":

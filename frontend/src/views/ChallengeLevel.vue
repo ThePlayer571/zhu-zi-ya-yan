@@ -2,7 +2,6 @@
 import { onMounted, computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useChallengeStore } from '../stores/challenge'
-import { DIFFICULTY_TITLES } from '../types'
 import CodeEditor from '../components/CodeEditor.vue'
 import OutputDisplay from '../components/OutputDisplay.vue'
 import InputPrompt from '../components/InputPrompt.vue'

@@ -46,7 +46,9 @@ export const useProgramStore = defineStore('program', () => {
   function getWsUrl(): string {
     // 允许通过环境变量配置（Vite 在构建时替换 import.meta.env.VITE_WS_URL）
     const envUrl: string | undefined = (import.meta as unknown as { env: Record<string, string> }).env?.VITE_WS_URL
-    return envUrl ?? 'ws://localhost:8000/ws/run'
+    if (envUrl) return envUrl
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    return `${protocol}//${window.location.host}/ws/run`
   }
 
   // ---- Actions ---------------------------------------------------------
