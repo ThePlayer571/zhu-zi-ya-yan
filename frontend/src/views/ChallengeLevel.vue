@@ -424,6 +424,11 @@ function handleCodeUpdate(code: string): void {
   background: rgba(184, 134, 11, 0.1);
 }
 
+.cl-difficulty.乡试 {
+  color: #4b6e9c;
+  background: rgba(75, 110, 156, 0.1);
+}
+
 .cl-difficulty.殿试 {
   color: var(--color-vermillion);
   background: rgba(196, 30, 58, 0.1);

@@ -70,6 +70,7 @@ export const useChallengeStore = defineStore('challenge', () => {
     const groups: Record<DifficultyGroup, ChallengeLevel[]> = {
       '开蒙': [],
       '院试': [],
+      '乡试': [],
       '殿试': [],
     }
     for (const level of levels.value) {

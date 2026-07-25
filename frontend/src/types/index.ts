@@ -65,7 +65,7 @@ export type WsClientMessage = WsRunMessage | WsInputMessage
 // ---- 闯关系统类型 ------------------------------------------------------
 
 /** 难度组别。 */
-export type DifficultyGroup = '开蒙' | '院试' | '殿试'
+export type DifficultyGroup = '开蒙' | '院试' | '乡试' | '殿试'
 
 /** 头衔信息。 */
 export interface TitleInfo {
@@ -74,10 +74,11 @@ export interface TitleInfo {
   description: string
 }
 
-/** 三个难度组别对应的头衔。 */
+/** 四个难度组别对应的头衔。 */
 export const DIFFICULTY_TITLES: Record<DifficultyGroup, TitleInfo> = {
   '开蒙': { group: '开蒙', earnedTitle: '童生', description: '通晓文言基础，可谓童生。' },
   '院试': { group: '院试', earnedTitle: '秀才', description: '博学于文，可谓秀才。' },
+  '乡试': { group: '乡试', earnedTitle: '举人', description: '才学出众，可谓举人。' },
   '殿试': { group: '殿试', earnedTitle: '进士', description: '学而优则仕，可谓进士。' },
 }
 

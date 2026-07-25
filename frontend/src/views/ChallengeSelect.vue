@@ -12,8 +12,8 @@ onMounted(() => {
   store.loadLevels()
 })
 
-/** 三个难度组别列表。 */
-const groups: DifficultyGroup[] = ['开蒙', '院试', '殿试']
+/** 四个难度组别列表。 */
+const groups: DifficultyGroup[] = ['开蒙', '院试', '乡试', '殿试']
 
 function goToLevel(id: string): void {
   router.push(`/challenge/${id}`)

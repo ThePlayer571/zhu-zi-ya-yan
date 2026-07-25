@@ -1,149 +1,711 @@
 {
   "levels": [
     {
-      "id": "hello-world",
-      "title": "你好世界",
-      "description": "输出「你好世界」四个字。\n\n此为入门之题，只需令程序输出「你好世界」即可通关。",
+      "id": "first-voice",
+      "title": "初试啼声",
+      "description": "输出「诸子雅言」四字。\n\n此为入门第一题。诸子雅言者，春秋古文风之编程语言也。今令程序诵其名号，以试啼声。",
       "difficultyGroup": "开蒙",
       "category": "入门",
-      "testCases": [
-        {
-          "expectedOutput": "你好世界"
-        }
-      ],
-      "hint": "用「曰」或「言」关键字定义字符串，再用「曰」或「言」语句输出之。",
-      "templateCode": "《试炼》\n  \n",
-      "groupOrder": 1
-    },
-    {
-      "id": "echo-input",
-      "title": "回响之问",
-      "description": "程序接收一个输入，原样输出之。\n\n用「问」语句读取用户输入到一个变量，再用「曰」语句输出该变量。",
-      "difficultyGroup": "开蒙",
-      "category": "入门",
-      "testCases": [
-        {
-          "inputs": ["春日"],
-          "expectedOutput": "春日"
-        },
-        {
-          "inputs": ["秋月"],
-          "expectedOutput": "秋月"
-        }
-      ],
-      "hint": "用「问」语句读取输入，再用「曰」输出。示例：问客子何名。客子曰。",
-      "templateCode": "《试炼》\n  \n",
-      "groupOrder": 2
-    },
-    {
-      "id": "variable-define",
-      "title": "定义有方",
-      "description": "定义一个字符串变量，并输出之。\n\n文言变量以「数」「言」「物」等后缀标明类型。此题练习字符串变量之定义与输出。",
-      "difficultyGroup": "开蒙",
-      "category": "变量",
       "testCases": [
         {
           "expectedOutput": "诸子雅言"
         }
       ],
-      "hint": "定义字符串变量用「曰」关键字，如「名子曰诸子雅言」。然后输出变量名即可。",
-      "templateCode": "《试炼》\n  \n",
+      "hint": "定义字符串用「曰」关键字，如「名子曰诸子雅言」。输出变量用「曰」语句。",
+      "templateCode": "《初试啼声》\n  \n",
+      "groupOrder": 1
+    },
+    {
+      "id": "echo-input",
+      "title": "回响之问",
+      "description": "程序接收一个输入，将其原样输出。\n\n譬如空谷传声，尔呼何语，山谷亦应何语。此题习输入输出之基本用法。",
+      "difficultyGroup": "开蒙",
+      "category": "入门",
+      "testCases": [
+        {
+          "inputs": [
+            "春风"
+          ],
+          "expectedOutput": "春风"
+        },
+        {
+          "inputs": [
+            "秋月"
+          ],
+          "expectedOutput": "秋月"
+        }
+      ],
+      "hint": "先定义字符串变量（如「答言子曰春风」），再用「问」读取输入覆盖之，最后用「曰」输出。注意：若变量已定义，再使用「曰」则为输出而非定义。",
+      "templateCode": "《回响之问》\n  \n",
+      "groupOrder": 2
+    },
+    {
+      "id": "reverse-two",
+      "title": "倒言其序",
+      "description": "依次读入两个整数，按相反次序输出之。\n\n譬如先闻甲、后闻乙，则先言乙、后言甲。此题习多变量之输入输出。",
+      "difficultyGroup": "开蒙",
+      "category": "变量",
+      "testCases": [
+        {
+          "inputs": [
+            "三",
+            "七"
+          ],
+          "expectedOutput": "七三"
+        },
+        {
+          "inputs": [
+            "十",
+            "五"
+          ],
+          "expectedOutput": "五十"
+        }
+      ],
+      "hint": "定义两个数变量分别读入，然后用「曰」语句按相反顺序输出。",
+      "templateCode": "《倒言其序》\n  \n",
       "groupOrder": 3
     },
     {
-      "id": "simple-add",
-      "title": "二数之和",
-      "description": "定义两个数，求其和并输出。\n\n用「数」后缀定义数字变量，用「加」操作求两数之和。",
+      "id": "add-two",
+      "title": "合而计之",
+      "description": "读入两个整数，求其和并输出。\n\n譬如府库入粟三石，又入粟五石，共计八石。此题习算术运算。",
       "difficultyGroup": "开蒙",
       "category": "算术",
       "testCases": [
         {
+          "inputs": [
+            "三",
+            "五"
+          ],
           "expectedOutput": "八"
+        },
+        {
+          "inputs": [
+            "十二",
+            "七"
+          ],
+          "expectedOutput": "十九"
+        },
+        {
+          "inputs": [
+            "零",
+            "百"
+          ],
+          "expectedOutput": "百"
         }
       ],
-      "hint": "定义两数如「甲数三。乙数五。」，求和用「丙数甲加乙」，然后输出丙。",
-      "templateCode": "《试炼》\n  \n",
+      "hint": "读入第一个数后，用「益」（+=）将第二个数累加之，然后输出第一个变量。",
+      "templateCode": "《合而计之》\n  \n",
       "groupOrder": 4
     },
     {
-      "id": "conditional-basic",
-      "title": "择路而行",
-      "description": "程序读取一个数，若该数为阳（大于零），则输出「阳」，否则输出「阴」。\n\n此题练习判正语句（正/善/阳）和条件跳转（若…则…行《篇章》）。",
+      "id": "choose-branch",
+      "title": "择善而从",
+      "description": "读入一个布尔值。若为是（真），则输出「王道」；若为否（假），则输出「霸道」。\n\n此题习条件分支——诸子雅言之「若…则…行《篇章》」语法。",
+      "difficultyGroup": "开蒙",
+      "category": "控制流",
+      "testCases": [
+        {
+          "inputs": [
+            "是"
+          ],
+          "expectedOutput": "王道"
+        },
+        {
+          "inputs": [
+            "否"
+          ],
+          "expectedOutput": "霸道"
+        }
+      ],
+      "hint": "先定义布尔变量（如「择子判曰是」），读入后覆盖之。然后用「若择子则行《王道篇》」调用对应篇章。需定义两个篇章函数分别输出。",
+      "templateCode": "《择善而从》\n  \n",
+      "groupOrder": 5
+    },
+    {
+      "id": "concat-strings",
+      "title": "珠联璧合",
+      "description": "读入两个字符串，将其拼接为一，输出拼接后之结果。\n\n譬如上联「春风」与下联「化雨」相合，则为「春风化雨」。此题习字符串之拼接运算。",
+      "difficultyGroup": "开蒙",
+      "category": "字符串",
+      "testCases": [
+        {
+          "inputs": [
+            "春风",
+            "化雨"
+          ],
+          "expectedOutput": "春风化雨"
+        },
+        {
+          "inputs": [
+            "诸子",
+            "雅言"
+          ],
+          "expectedOutput": "诸子雅言"
+        }
+      ],
+      "hint": "用「并」或「合」（+=）将两个字符串拼接。先定义第一个字符串变量读入，再用「并」将第二个读入的字符串追加之。",
+      "templateCode": "《珠联璧合》\n  \n",
+      "groupOrder": 6
+    },
+    {
+      "id": "average-float",
+      "title": "中庸之道",
+      "description": "读入两个浮点数，求其平均值并输出。\n\n中庸者，不偏不倚，执两用中也。取二数之中点，是为平均。此题习浮点数之运算。",
+      "difficultyGroup": "院试",
+      "category": "算术",
+      "testCases": [
+        {
+          "inputs": [
+            "四",
+            "八"
+          ],
+          "expectedOutput": "六"
+        },
+        {
+          "inputs": [
+            "三",
+            "六"
+          ],
+          "expectedOutput": "四又五秒"
+        }
+      ],
+      "hint": "浮点数定义用「度」或「量」后缀。二数相加后用「分」（/=）除以二。需先定义常数「二子度曰二」作为除数。",
+      "templateCode": "《中庸之道》\n  二子度曰二。\n  \n",
+      "groupOrder": 10
+    },
+    {
+      "id": "larger-first",
+      "title": "先长后幼",
+      "description": "读入两个整数，先输出较大者，后输出较小者。若二数相等，则任意次序皆可。\n\n譬如兄弟序齿，长者先行。此题习比较逻辑之实现。",
       "difficultyGroup": "院试",
       "category": "控制流",
       "testCases": [
         {
-          "inputs": ["五"],
+          "inputs": [
+            "五",
+            "三"
+          ],
+          "expectedOutput": "五三"
+        },
+        {
+          "inputs": [
+            "二",
+            "八"
+          ],
+          "expectedOutput": "八二"
+        },
+        {
+          "inputs": [
+            "四",
+            "四"
+          ],
+          "expectedOutput": "四四"
+        }
+      ],
+      "hint": "诸子雅言无直接比较运算符。可借助减法与判正/判零来实现：计算甲减乙与乙减甲，若甲减乙为正，则甲大；若乙减甲为正，则乙大；皆为零则相等。注意：负数会被截断为零。",
+      "templateCode": "《先长后幼》\n  \n",
+      "groupOrder": 20
+    },
+    {
+      "id": "count-five",
+      "title": "执中守五",
+      "description": "读入三个整数，统计其中等于五的个数，输出该数目。\n\n五者，中也。天地之数，中数为尊。试看三数之中，有几数守中？此题习多重条件判断。",
+      "difficultyGroup": "院试",
+      "category": "控制流",
+      "testCases": [
+        {
+          "inputs": [
+            "五",
+            "五",
+            "五"
+          ],
+          "expectedOutput": "三"
+        },
+        {
+          "inputs": [
+            "五",
+            "三",
+            "八"
+          ],
+          "expectedOutput": "一"
+        },
+        {
+          "inputs": [
+            "一",
+            "二",
+            "三"
+          ],
+          "expectedOutput": "零"
+        },
+        {
+          "inputs": [
+            "五",
+            "五",
+            "一"
+          ],
+          "expectedOutput": "二"
+        }
+      ],
+      "hint": "判断某数是否等于五，需同时验证「该数减五为零」且「五减该数为零」。若仅验一边，则无法区分数小于五还是等于五。用嵌套「若…则」可实现「且」逻辑。",
+      "templateCode": "《执中守五》\n  \n",
+      "groupOrder": 30
+    },
+    {
+      "id": "sort-three",
+      "title": "三才列序",
+      "description": "读入三个整数，按从大到小的次序输出之。相等者不限次序。\n\n天、地、人，三才也。今有三数，试为之列序，使尊者居前、卑者居后。此题综合运用比较与条件分支。",
+      "difficultyGroup": "院试",
+      "category": "综合",
+      "testCases": [
+        {
+          "inputs": [
+            "三",
+            "二",
+            "一"
+          ],
+          "expectedOutput": "三二一"
+        },
+        {
+          "inputs": [
+            "一",
+            "三",
+            "二"
+          ],
+          "expectedOutput": "三二一"
+        },
+        {
+          "inputs": [
+            "五",
+            "五",
+            "三"
+          ],
+          "expectedOutput": "五五三"
+        }
+      ],
+      "hint": "可先比较甲与乙，将较大者置于甲；再比较甲与丙，将较大者置于甲——此时甲必为最大。随后比较乙与丙，定后两数之序。比较之法同「先长后幼」题。",
+      "templateCode": "《三才列序》\n  \n",
+      "groupOrder": 40
+    },
+    {
+      "id": "odd-even",
+      "title": "阴阳之辨",
+      "description": "读入一个整数，判断其奇偶。若为偶数，输出「阴」；若为奇数，输出「阳」。\n\n古以奇数为阳、偶数为阴。譬如三为阳，四为阴。此题习取余运算。",
+      "difficultyGroup": "院试",
+      "category": "算术",
+      "testCases": [
+        {
+          "inputs": [
+            "四"
+          ],
+          "expectedOutput": "阴"
+        },
+        {
+          "inputs": [
+            "七"
+          ],
           "expectedOutput": "阳"
         },
         {
-          "inputs": ["零"],
-          "expectedOutput": "阴"
-        },
-        {
-          "inputs": ["负三"],
+          "inputs": [
+            "零"
+          ],
           "expectedOutput": "阴"
         }
       ],
-      "templateCode": "《试炼》\n  问客子数。\n  \n《向阳》\n  客子曰阳。\n《向阴》\n  客子曰阴。",
-      "groupOrder": 1
+      "hint": "定义「二子数二」作为除数。读入数值后，用「余」（%=）对二取余。余数为零则为偶，否则为奇。",
+      "templateCode": "《阴阳之辨》\n  \n",
+      "groupOrder": 50
     },
     {
-      "id": "list-create",
-      "title": "列队初成",
-      "description": "创建一个列表，包含三个元素，然后依次输出列表中的每个元素。\n\n用「物」后缀定义列表，用「物」索引访问元素。\n\n期望输出三行，每行一个元素。",
+      "id": "dedup-output",
+      "title": "闻新录异",
+      "description": "依次读入五个整数。若当前整数为首次出现，则输出之；若此前已出现过，则跳过不输出。\n\n譬如史官记事，已录者不复录，唯新事入典。此题习列表操作与去重逻辑。",
       "difficultyGroup": "院试",
       "category": "列表",
       "testCases": [
         {
-          "expectedOutput": "春日秋月冬雪"
+          "inputs": [
+            "一",
+            "二",
+            "三",
+            "二",
+            "四"
+          ],
+          "expectedOutput": "一二三四"
+        },
+        {
+          "inputs": [
+            "五",
+            "五",
+            "五",
+            "五",
+            "五"
+          ],
+          "expectedOutput": "五"
+        },
+        {
+          "inputs": [
+            "三",
+            "一",
+            "四",
+            "一",
+            "五"
+          ],
+          "expectedOutput": "三一四五"
         }
       ],
-      "hint": "定义列表如「四季物曰春曰秋曰冬」。输出第一个元素用「四季物一言」。",
-      "templateCode": "《试炼》\n  \n",
-      "groupOrder": 2
+      "hint": "将五个数分别存入甲、乙、丙、丁、戊五个变量。甲必输出。输出乙前，判乙是否等于甲（用减法双向判零法）；若不等于甲则输出。输出丙前，判丙是否等于甲或乙，以此类推。判断两数相等之法参考「执中守五」题。",
+      "templateCode": "《闻新录异》\n  \n",
+      "groupOrder": 60
     },
     {
-      "id": "fizzbuzz-classic",
-      "title": "三舍五入",
-      "description": "输入一个数。若其为三之倍数，则输出「舍」。若其为五之倍数，则输出「入」。若同时为三五之倍数，则输出「舍入」。否则输出原数。\n\n此题综合运用条件判断、算术运算、函数调用。",
-      "difficultyGroup": "殿试",
+      "id": "nth-number",
+      "title": "指月之指",
+      "description": "先读入一个整数n，表示目标位置。随后依次读入若干整数，输出其中第n个。\n\n以手指月，指非月也——然循指可见月。n者指也，第n个数者月也。此题习计数与条件判断之配合。",
+      "difficultyGroup": "院试",
       "category": "综合",
       "testCases": [
         {
-          "inputs": ["三"],
-          "expectedOutput": "舍"
+          "inputs": [
+            "三",
+            "十",
+            "二十",
+            "三十",
+            "四十"
+          ],
+          "expectedOutput": "三十"
         },
         {
-          "inputs": ["五"],
-          "expectedOutput": "入"
+          "inputs": [
+            "一",
+            "百",
+            "五十"
+          ],
+          "expectedOutput": "百"
         },
         {
-          "inputs": ["十五"],
-          "expectedOutput": "舍入"
-        },
-        {
-          "inputs": ["七"],
-          "expectedOutput": "七"
+          "inputs": [
+            "二",
+            "五",
+            "十"
+          ],
+          "expectedOutput": "十"
         }
       ],
-      "templateCode": "《试炼》\n  问客子数。\n  \n《舍》\n  客子曰舍。\n《入》\n  客子曰入。\n《舍入》\n  客子曰舍入。",
-      "groupOrder": 1
+      "hint": "维护计数器（初值为一）。每读一数，先判计数器是否等于n（减法双向验证），若等则输出当前数；否则计数器加一，以递归继续读下一个数。",
+      "templateCode": "《指月之指》\n  \n",
+      "groupOrder": 70
     },
     {
-      "id": "fibonacci",
+      "id": "sum-first-n",
+      "title": "累土成山",
+      "description": "读入一个整数n，求前n项之和（即一+二+…+n），输出结果。\n\n九层之台，起于累土。合抱之木，生于毫末。逐次累加，终成巨数。此题习递归累加。",
+      "difficultyGroup": "乡试",
+      "category": "算法",
+      "testCases": [
+        {
+          "inputs": [
+            "五"
+          ],
+          "expectedOutput": "十五"
+        },
+        {
+          "inputs": [
+            "十"
+          ],
+          "expectedOutput": "五十五"
+        },
+        {
+          "inputs": [
+            "一"
+          ],
+          "expectedOutput": "一"
+        },
+        {
+          "inputs": [
+            "零"
+          ],
+          "expectedOutput": "零"
+        }
+      ],
+      "hint": "维护和变量（初值为零）与计数变量（初值为一）。递归：若计数器大于n则输出和；否则将计数器累加入和，计数器加一，继续递归。比较之法同前：用减法加判正。",
+      "templateCode": "《累土成山》\n  \n",
+      "groupOrder": 10
+    },
+    {
+      "id": "sum-k-ints",
+      "title": "聚沙成塔",
+      "description": "先读入整数k，随后依次读入k个整数，求其总和并输出。\n\n聚沙成塔，集腋成裘。k个数各自微末，合而计之，其力不微。此题习计数器控制之循环。",
+      "difficultyGroup": "乡试",
+      "category": "算术",
+      "testCases": [
+        {
+          "inputs": [
+            "三",
+            "二",
+            "四",
+            "六"
+          ],
+          "expectedOutput": "十二"
+        },
+        {
+          "inputs": [
+            "五",
+            "一",
+            "二",
+            "三",
+            "四",
+            "五"
+          ],
+          "expectedOutput": "十五"
+        },
+        {
+          "inputs": [
+            "一",
+            "百"
+          ],
+          "expectedOutput": "百"
+        },
+        {
+          "inputs": [
+            "零"
+          ],
+          "expectedOutput": "零"
+        }
+      ],
+      "hint": "每读入一个数并累加后，将k减一。判k是否为零：若为零则输出和；否则继续递归读下一个数。",
+      "templateCode": "《聚沙成塔》\n  \n",
+      "groupOrder": 20
+    },
+    {
+      "id": "power-ab",
+      "title": "指数之威",
+      "description": "读入两个整数a与b，求a的b次方（a**b），输出结果。a与b皆为非负整数。a**零恒为一。\n\n指数之增，其势如雷。二之十次方，已逾千矣。此题习乘法循环。",
+      "difficultyGroup": "乡试",
+      "category": "算术",
+      "testCases": [
+        {
+          "inputs": [
+            "二",
+            "三"
+          ],
+          "expectedOutput": "八"
+        },
+        {
+          "inputs": [
+            "三",
+            "二"
+          ],
+          "expectedOutput": "九"
+        },
+        {
+          "inputs": [
+            "五",
+            "一"
+          ],
+          "expectedOutput": "五"
+        },
+        {
+          "inputs": [
+            "十",
+            "零"
+          ],
+          "expectedOutput": "一"
+        }
+      ],
+      "hint": "维护结果变量（初值为一）。每次将结果乘以a，b减一，递归直至b为零时输出结果。注意：b为零时（零次方），结果应为一。",
+      "templateCode": "《指数之威》\n  \n",
+      "groupOrder": 30
+    },
+    {
+      "id": "reverse-k-strings",
+      "title": "倒诵如流",
+      "description": "先读入整数k，随后读入k个字符串。将这些字符串按相反次序输出。\n\n譬如阅卷三篇，阅时自前而后，诵时自后而前。倒诵如流，方为烂熟。此题习递归之妙用——先递归、后输出，则输出次序自然颠倒。",
+      "difficultyGroup": "乡试",
+      "category": "递归",
+      "testCases": [
+        {
+          "inputs": [
+            "三",
+            "春",
+            "夏",
+            "秋"
+          ],
+          "expectedOutput": "秋夏春"
+        },
+        {
+          "inputs": [
+            "二",
+            "甲",
+            "乙"
+          ],
+          "expectedOutput": "乙甲"
+        },
+        {
+          "inputs": [
+            "一",
+            "独"
+          ],
+          "expectedOutput": "独"
+        }
+      ],
+      "hint": "定义递归函数：若k为零则返回；否则读入一个字符串，k减一，调用自身递归，递归返回后再输出该字符串。此「先递归后输出」之次序，巧将先读入者后输出，实现倒序。",
+      "templateCode": "《倒诵如流》\n  \n",
+      "groupOrder": 40
+    },
+    {
+      "id": "find-k-position",
+      "title": "按图索骥",
+      "description": "先读入一个整数k。随后依次读入若干整数，其中必有一数等于k。输出该数出现之位置（从1开始计数）。\n\n按图索骥，循名责实。已知骥在群马之中，试寻其位次。此题习线性搜寻。",
+      "difficultyGroup": "乡试",
+      "category": "算法",
+      "testCases": [
+        {
+          "inputs": [
+            "五",
+            "一",
+            "三",
+            "五",
+            "七",
+            "九"
+          ],
+          "expectedOutput": "三"
+        },
+        {
+          "inputs": [
+            "十",
+            "十",
+            "二十",
+            "三十"
+          ],
+          "expectedOutput": "一"
+        },
+        {
+          "inputs": [
+            "七",
+            "三",
+            "五",
+            "七"
+          ],
+          "expectedOutput": "三"
+        }
+      ],
+      "hint": "维护位置计数器（初值为一）。每读入一数，先判是否等于k（减法双向验证法，参考「执中守五」题）。若相等，输出当前位置；否则位置加一，递归读下一个数。",
+      "templateCode": "《按图索骥》\n  \n",
+      "groupOrder": 50
+    },
+    {
+      "id": "buy-chickens",
+      "title": "市鸡之算",
+      "description": "读入两个整数n与m。n为尔之钱财，m为一只鸡之价格。求以n钱最多可买几只鸡，输出之。\n\n譬如怀百钱入市，鸡价三十，则最多可买三只。此题可借减法循环求解，亦可用除法直接求得。",
+      "difficultyGroup": "乡试",
+      "category": "算术",
+      "testCases": [
+        {
+          "inputs": [
+            "百",
+            "三十"
+          ],
+          "expectedOutput": "三"
+        },
+        {
+          "inputs": [
+            "五十",
+            "十"
+          ],
+          "expectedOutput": "五"
+        },
+        {
+          "inputs": [
+            "五",
+            "十"
+          ],
+          "expectedOutput": "零"
+        },
+        {
+          "inputs": [
+            "零",
+            "五"
+          ],
+          "expectedOutput": "零"
+        }
+      ],
+      "hint": "法一：反复从n中减去m，每次减后计数加一，直至n小于m（n减m后为零，即n<m）。法二：定义变量赋为n，用「分」（/=）除以m，但需先确保m不为零。",
+      "templateCode": "《市鸡之算》\n  \n",
+      "groupOrder": 60
+    },
+    {
+      "id": "fibonacci-k",
       "title": "兔数之列",
-      "description": "输出斐波那契数列之前十项，每项一行。\n\n斐波那契数列：一、一、二、三、五、八、十三、二十一、三十四、五十五。\n\n此题练习循环与列表操作。",
+      "description": "读入一个整数k（k至少为一），输出斐波那契数列之第k项。\n\n斐波那契数列者，首两项为一，其后每项为前两项之和。即：一、一、二、三、五、八、十三……\n\n昔有兔问于数学家曰：「吾族繁衍，一对兔月生一对，新生之兔二月后又可生。问k月后有几对？」此题习多变量递归递推。",
       "difficultyGroup": "殿试",
       "category": "算法",
       "testCases": [
         {
-          "expectedOutput": "一一二三五八十三二十一三十四五十五"
+          "inputs": [
+            "一"
+          ],
+          "expectedOutput": "一"
+        },
+        {
+          "inputs": [
+            "二"
+          ],
+          "expectedOutput": "一"
+        },
+        {
+          "inputs": [
+            "六"
+          ],
+          "expectedOutput": "八"
+        },
+        {
+          "inputs": [
+            "十"
+          ],
+          "expectedOutput": "五十五"
         }
       ],
-      "hint": "可用列表接续（增）操作构建数列，然后逐项输出。亦可使用篇章函数递归。",
-      "templateCode": "《试炼》\n  \n",
-      "groupOrder": 2
+      "hint": "维护前两项（甲数一、乙数一）与计数器（计子数二）。若k为一或二，直接输出一。否则递归：计算下一项为甲+乙，然后甲取乙（前移），乙取新项（前移），计数器加一。计数器等于k时输出乙。",
+      "templateCode": "《兔数之列》\n  \n",
+      "groupOrder": 10
+    },
+    {
+      "id": "is-prime",
+      "title": "素心可鉴",
+      "description": "读入一个整数，判断其是否为素数。若是，输出「然」；若否，输出「非」。\n\n素者，大于一且仅可被一与自身整除之数也。素心如雪，不杂不染。此题习试除法。\n\n注：一非素数。零亦非素数。",
+      "difficultyGroup": "殿试",
+      "category": "算法",
+      "testCases": [
+        {
+          "inputs": [
+            "七"
+          ],
+          "expectedOutput": "然"
+        },
+        {
+          "inputs": [
+            "四"
+          ],
+          "expectedOutput": "非"
+        },
+        {
+          "inputs": [
+            "一"
+          ],
+          "expectedOutput": "非"
+        },
+        {
+          "inputs": [
+            "十一"
+          ],
+          "expectedOutput": "然"
+        }
+      ],
+      "hint": "若数小于二，直接输出「非」。否则从二开始试除至该数减一。用取余运算「余」检查能否整除：先复制原数，对除数取余，若余数为零则非素数。注意取余会修改原变量，须先复制。",
+      "templateCode": "《素心可鉴》\n  \n",
+      "groupOrder": 20
     }
   ]
 }
