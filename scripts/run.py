@@ -16,3 +16,5 @@ with open(source_path, 'r', encoding='utf-8') as f:
     program_info = translate_program(source_code)
     program = Program(program_info, PythonNativeIO())
     program.run()
+    print()
+    print(program.recorder.get_full_text())

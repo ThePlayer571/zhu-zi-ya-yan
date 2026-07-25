@@ -394,16 +394,15 @@ class TestListPopHeadRun:
 class TestFunctionCallRun:
     """函数调用语句的执行测试。
 
-    注：FunctionCallStatement.run() 需要 Program 实例运行中。
-    直接调用会导致 RuntimeError，这里测试该行为。
+    注：FunctionCallStatement.run() 仅返回函数名，由上层 Function.execute() 负责
+    检查 Program 并执行实际调用。
     """
 
-    def test_无Program运行时抛出RuntimeError(self):
-        """没有运行中的 Program 时，调用 FunctionCallStatement 抛出 RuntimeError。"""
+    def test_run返回函数名(self):
+        """run() 返回需要调用的函数名。"""
         ctx = make_ctx(甲子=Value(ValueType.INTEGER, 0))
         stmt = FunctionCallStatement(make_si(), ctx, "学而")
-        with pytest.raises(RuntimeError):
-            stmt.run()
+        assert stmt.run() == "学而"
 
 
 # =============================================================================
@@ -430,11 +429,11 @@ class TestIfStatementRun:
         stmt = IfStatement(make_si(), ctx, "条件子", "学而")
         stmt.run()  # 不抛异常，不调用函数
 
-    def test_条件为True_但无Program_抛出RuntimeError(self):
+    def test_条件为True_run返回函数名(self):
+        """条件为 True 时 run() 返回函数名（不直接调用，由上层负责）。"""
         ctx = make_ctx(条件子=Value(ValueType.BOOLEAN, True))
         stmt = IfStatement(make_si(), ctx, "条件子", "学而")
-        with pytest.raises(RuntimeError):
-            stmt.run()
+        assert stmt.run() == "学而"
 
 
 # =============================================================================

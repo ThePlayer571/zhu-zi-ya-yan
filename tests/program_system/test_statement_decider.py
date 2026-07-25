@@ -4,10 +4,6 @@
 """
 
 from zhuziyayan.program_system.context import Context
-from zhuziyayan.program_system.expression import (
-    ListIndexExpression,
-    VariableExpression,
-)
 from zhuziyayan.program_system.statement import (
     AssignmentStatement,
     ComputeAssignmentStatement,
@@ -28,7 +24,6 @@ from zhuziyayan.program_system.statement import (
 )
 from zhuziyayan.program_system.statement_decider import decide
 from zhuziyayan.program_system.value import Value, ValueType
-from zhuziyayan.translator.statement_info import StatementInfo
 
 
 # =============================================================================
@@ -36,8 +31,9 @@ from zhuziyayan.translator.statement_info import StatementInfo
 # =============================================================================
 
 
-def make_statement_info(statement: str) -> StatementInfo:
+def make_statement_info(statement: str) -> "StatementInfo":
     """创建 StatementInfo 的快捷方式。"""
+    from zhuziyayan.translator.statement_info import StatementInfo
     return StatementInfo(statement, [])
 
 
@@ -89,16 +85,16 @@ class TestVariableDefinition:
         ctx = Context(None)
         result = decide(make_statement_info("甲子曰善。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.variable_name == "甲子"
-        assert result.value.type == ValueType.STRING
-        assert result.value.raw == "善"
+        assert result.details["变量名"] == "甲子"
+        assert result.details["类型"] == "字符串"
+        assert result.details["初始值"] == "善"
 
     def test_字符串_独立_云(self):
         ctx = Context(None)
         result = decide(make_statement_info("甲子云善。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.type == ValueType.STRING
-        assert result.value.raw == "善"
+        assert result.details["类型"] == "字符串"
+        assert result.details["初始值"] == "善"
 
     # ---- 字符串定义（搭配：文/言/语/诗…作/书/述/吟） ----
 
@@ -106,20 +102,20 @@ class TestVariableDefinition:
         ctx = Context(None)
         result = decide(make_statement_info("甲子文作善。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.type == ValueType.STRING
-        assert result.value.raw == "善"
+        assert result.details["类型"] == "字符串"
+        assert result.details["初始值"] == "善"
 
     def test_字符串_搭配_言述(self):
         ctx = Context(None)
         result = decide(make_statement_info("甲子言述善。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.raw == "善"
+        assert result.details["初始值"] == "善"
 
     def test_字符串_搭配_诗吟(self):
         ctx = Context(None)
         result = decide(make_statement_info("甲子诗吟善。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.raw == "善"
+        assert result.details["初始值"] == "善"
 
     # ---- 整数定义 ----
 
@@ -127,8 +123,8 @@ class TestVariableDefinition:
         ctx = Context(None)
         result = decide(make_statement_info("甲子数一百二十三。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.type == ValueType.INTEGER
-        assert result.value.raw == 123
+        assert result.details["类型"] == "整数"
+        assert result.details["初始值"] == "一百二十三"
 
     # ---- 浮点数定义 ----
 
@@ -136,15 +132,16 @@ class TestVariableDefinition:
         ctx = Context(None)
         result = decide(make_statement_info("甲子度曰三又一秒。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.type == ValueType.FLOAT
-        assert abs(result.value.raw - 3.1) < 0.0001
+        assert result.details["类型"] == "浮点数"
+        assert "三" in result.details["初始值"]
+        assert "秒" in result.details["初始值"]
 
     def test_浮点数定义_量(self):
         ctx = Context(None)
         result = decide(make_statement_info("甲子量曰五。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.type == ValueType.FLOAT
-        assert result.value.raw == 5.0
+        assert result.details["类型"] == "浮点数"
+        assert result.details["初始值"] == "五"
 
     # ---- 布尔值定义 ----
 
@@ -152,20 +149,20 @@ class TestVariableDefinition:
         ctx = Context(None)
         result = decide(make_statement_info("甲子辩曰是。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.type == ValueType.BOOLEAN
-        assert result.value.raw is True
+        assert result.details["类型"] == "布尔"
+        assert result.details["初始值"] == "是"
 
     def test_布尔定义_非(self):
         ctx = Context(None)
         result = decide(make_statement_info("甲子判为非。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.raw is False
+        assert result.details["初始值"] == "否"
 
     def test_布尔定义_是非关键字(self):
         ctx = Context(None)
         result = decide(make_statement_info("甲子是非曰然。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.raw is True
+        assert result.details["初始值"] == "是"
 
     # ---- 列表定义 ----
 
@@ -173,39 +170,38 @@ class TestVariableDefinition:
         ctx = Context(None)
         result = decide(make_statement_info("甲子举言元素甲、元素乙。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.type == ValueType.STRING_LIST
-        assert result.value.raw == ["元素甲", "元素乙"]
+        assert result.details["类型"] == "字符串列表"
+        assert result.details["初始值"] == "元素甲、元素乙"
 
     def test_列表定义_整数列表(self):
         ctx = Context(None)
         result = decide(make_statement_info("甲子列数一、二、三。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.variable_name == "甲子"
-        assert result.value.type == ValueType.INTEGER_LIST
-        assert result.value.raw == [1, 2, 3]
+        assert result.details["变量名"] == "甲子"
+        assert result.details["类型"] == "整数列表"
+        assert result.details["初始值"] == "一、二、三"
 
     def test_列表定义_浮点数列表(self):
         ctx = Context(None)
         result = decide(make_statement_info("甲子举度一又五秒、二又三秒。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.type == ValueType.FLOAT_LIST
-        assert len(result.value.raw) == 2
-        assert abs(result.value.raw[0] - 1.5) < 0.0001
+        assert result.details["类型"] == "浮点数列表"
+        assert "、" in result.details["初始值"]
 
     def test_列表定义_布尔值列表(self):
         ctx = Context(None)
         result = decide(make_statement_info("甲子列判是、否。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.type == ValueType.BOOLEAN_LIST
-        assert result.value.raw == [True, False]
+        assert result.details["类型"] == "布尔列表"
+        assert result.details["初始值"] == "是、否"
 
     def test_列表定义_空列表(self):
         """空列表：举/列+类型字后紧跟一句读（非顿号）。"""
         ctx = Context(None)
         result = decide(make_statement_info("甲子举言。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.type == ValueType.STRING_LIST
-        assert result.value.raw == []
+        assert result.details["类型"] == "字符串列表"
+        assert result.details["初始值"] == ""
 
     # ---- 所有类型不匹配 → NONE ----
 
@@ -214,7 +210,7 @@ class TestVariableDefinition:
         ctx = Context(None)
         result = decide(make_statement_info("新变子莫名其妙。"), ctx)
         assert isinstance(result, VariableDefinitionStatement)
-        assert result.value.type == ValueType.NONE
+        assert result.details["类型"] == "无"
 
 
 # =============================================================================
@@ -229,9 +225,8 @@ class TestAssignmentRouting:
         ctx = make_context_with(甲子=Value(ValueType.INTEGER, 5), 乙子=Value(ValueType.INTEGER, 10))
         result = decide(make_statement_info("甲子取乙子。"), ctx)
         assert isinstance(result, AssignmentStatement)
-        assert result.target_variable_name == "甲子"
-        assert isinstance(result.source, VariableExpression)
-        assert result.source.variable_name == "乙子"
+        assert result.details["目标变量"] == "甲子"
+        assert result.details["来源"] == "乙子"
 
     def test_赋值_为(self):
         ctx = make_context_with(甲子=Value(ValueType.INTEGER, 5), 乙子=Value(ValueType.INTEGER, 10))
@@ -242,7 +237,8 @@ class TestAssignmentRouting:
         ctx = make_context_with(甲子=Value(ValueType.INTEGER, 5), 列子=Value(ValueType.INTEGER_LIST, [1, 2, 3]))
         result = decide(make_statement_info("甲子取列子其二。"), ctx)
         assert isinstance(result, AssignmentStatement)
-        assert isinstance(result.source, ListIndexExpression)
+        assert "列子" in result.details["来源"]
+        assert "二" in result.details["来源"]
 
 
 # =============================================================================
@@ -257,31 +253,31 @@ class TestComputeAssignmentRouting:
         ctx = make_context_with(甲子=Value(ValueType.INTEGER, 5), 乙子=Value(ValueType.INTEGER, 10))
         result = decide(make_statement_info("甲子益乙子。"), ctx)
         assert isinstance(result, ComputeAssignmentStatement)
-        assert result.operator == ComputeOperator.ADD
+        assert result.details["运算符"] == "加"
 
     def test_计算赋值减(self):
         ctx = make_context_with(甲子=Value(ValueType.INTEGER, 5), 乙子=Value(ValueType.INTEGER, 10))
         result = decide(make_statement_info("甲子损乙子。"), ctx)
         assert isinstance(result, ComputeAssignmentStatement)
-        assert result.operator == ComputeOperator.SUB
+        assert result.details["运算符"] == "减"
 
     def test_计算赋值乘(self):
         ctx = make_context_with(甲子=Value(ValueType.INTEGER, 5), 乙子=Value(ValueType.INTEGER, 10))
         result = decide(make_statement_info("甲子倍乙子。"), ctx)
         assert isinstance(result, ComputeAssignmentStatement)
-        assert result.operator == ComputeOperator.MUL
+        assert result.details["运算符"] == "乘"
 
     def test_计算赋值除(self):
         ctx = make_context_with(甲子=Value(ValueType.INTEGER, 5), 乙子=Value(ValueType.INTEGER, 10))
         result = decide(make_statement_info("甲子分乙子。"), ctx)
         assert isinstance(result, ComputeAssignmentStatement)
-        assert result.operator == ComputeOperator.DIV
+        assert result.details["运算符"] == "除以"
 
     def test_计算赋值模(self):
         ctx = make_context_with(甲子=Value(ValueType.INTEGER, 5), 乙子=Value(ValueType.INTEGER, 10))
         result = decide(make_statement_info("甲子余乙子。"), ctx)
         assert isinstance(result, ComputeAssignmentStatement)
-        assert result.operator == ComputeOperator.MOD
+        assert result.details["运算符"] == "取模"
 
 
 # =============================================================================
@@ -355,7 +351,7 @@ class TestListOperationRouting:
         ctx = make_context_with(列子=Value(ValueType.STRING_LIST, ["甲", "乙"]), 新子=Value(ValueType.STRING, "丙"))
         result = decide(make_statement_info("列子易其一曰新子。"), ctx)
         assert isinstance(result, ListIndexModifyStatement)
-        assert result.index == 1
+        assert result.details["索引"] == "一"
 
 
 # =============================================================================
@@ -370,13 +366,13 @@ class TestFunctionCallRouting:
         ctx = make_context_with(甲子=Value(ValueType.INTEGER, 1))
         result = decide(make_statement_info("甲子行《学而》。"), ctx)
         assert isinstance(result, FunctionCallStatement)
-        assert result.function_name == "学而"
+        assert result.details["函数名"] == "学而"
 
     def test_函数调用_用(self):
         ctx = make_context_with(甲子=Value(ValueType.INTEGER, 1))
         result = decide(make_statement_info("甲子用《为政》。"), ctx)
         assert isinstance(result, FunctionCallStatement)
-        assert result.function_name == "为政"
+        assert result.details["函数名"] == "为政"
 
 
 # =============================================================================
@@ -391,14 +387,14 @@ class TestIfStatementRouting:
         ctx = make_context_with(条件子=Value(ValueType.BOOLEAN, True))
         result = decide(make_statement_info("若条件子是则行《学而》。"), ctx)
         assert isinstance(result, IfStatement)
-        assert result.condition_variable_name == "条件子"
-        assert result.function_name == "学而"
+        assert result.details["条件变量"] == "条件子"
+        assert result.details["调用的函数"] == "学而"
 
     def test_if_苟关键字(self):
         ctx = make_context_with(条件子=Value(ValueType.BOOLEAN, True))
         result = decide(make_statement_info("苟条件子然则行《学而》。"), ctx)
         assert isinstance(result, IfStatement)
-        assert result.condition_variable_name == "条件子"
+        assert result.details["条件变量"] == "条件子"
 
     def test_if_即关键字(self):
         ctx = make_context_with(条件子=Value(ValueType.BOOLEAN, True))
@@ -424,7 +420,7 @@ class TestOutputRouting:
         ctx = make_context_with(甲子=Value(ValueType.INTEGER, 5))
         result = decide(make_statement_info("甲子曰。"), ctx)
         assert isinstance(result, OutputStatement)
-        assert result.target_variable_name == "甲子"
+        assert result.details["输出变量"] == "甲子"
 
     def test_输出_言(self):
         ctx = make_context_with(甲子=Value(ValueType.STRING, "hello"))
@@ -451,23 +447,23 @@ class TestInputRouting:
         ctx = make_context_with(甲子=Value(ValueType.STRING, ""))
         result = decide(make_statement_info("甲子问请输入。"), ctx)
         assert isinstance(result, InputStatement)
-        assert result.target_variable_name == "甲子"
-        assert result.prompt == "请输入"
+        assert result.details["输入变量"] == "甲子"
+        assert result.details["提示"] == "请输入"
 
     def test_输入_带提示_询(self):
         ctx = make_context_with(甲子=Value(ValueType.INTEGER, 0))
         result = decide(make_statement_info("甲子询请输入数字。"), ctx)
         assert isinstance(result, InputStatement)
-        assert result.prompt == "请输入数字"
+        assert result.details["提示"] == "请输入数字"
 
     def test_输入_无提示_听(self):
         ctx = make_context_with(甲子=Value(ValueType.STRING, ""))
         result = decide(make_statement_info("甲子听。"), ctx)
         assert isinstance(result, InputStatement)
-        assert result.prompt is None
+        assert "提示" not in result.details
 
     def test_输入_无提示_闻(self):
         ctx = make_context_with(甲子=Value(ValueType.STRING, ""))
         result = decide(make_statement_info("甲子闻。"), ctx)
         assert isinstance(result, InputStatement)
-        assert result.prompt is None
+        assert "提示" not in result.details

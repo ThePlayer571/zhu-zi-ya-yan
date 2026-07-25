@@ -2,14 +2,24 @@
 
 from zhuziyayan.program_system.context import Context
 from zhuziyayan.program_system.function import Function
+from zhuziyayan.program_system.io_strategy import PythonNativeIO
+from zhuziyayan.program_system.program import Program
 from zhuziyayan.program_system.value import Value, ValueType
 from zhuziyayan.translator.function_info import FunctionInfo
+from zhuziyayan.translator.program_info import ProgramInfo
 from zhuziyayan.translator.statement_info import StatementInfo
 
 
 def make_func_info(name: str = "《测试》", statements: list[StatementInfo] | None = None) -> FunctionInfo:
     """创建 FunctionInfo 的快捷方式。"""
     return FunctionInfo(name, statements or [], {})
+
+
+def _run_in_program(func_info: FunctionInfo) -> Program:
+    """以 func_info 为书名函数创建并运行 Program。"""
+    program = Program(ProgramInfo(func_info, []), PythonNativeIO())
+    program.run()
+    return program
 
 
 class TestFunction:
@@ -39,8 +49,7 @@ class TestFunction:
 
     def test_execute_空函数体(self):
         info = make_func_info("《空》", [])
-        func = Function(info, None)
-        func.execute()  # 不抛异常
+        _run_in_program(info)  # 不抛异常
 
     def test_execute_变量定义语句(self):
         """执行包含变量定义语句的函数。"""
@@ -48,7 +57,13 @@ class TestFunction:
             StatementInfo("甲子数十。", []),
         ])
         func = Function(info, None)
-        func.execute()
+        # 手动设置 Program._running，因为 execute() 需要它
+        program = Program(ProgramInfo(info, []), PythonNativeIO())
+        Program._running = program
+        try:
+            func.execute()
+        finally:
+            Program._running = None
         assert func.context.has_variable("甲子")
         assert func.context.get_variable("甲子").value.raw == 10
 
@@ -60,7 +75,12 @@ class TestFunction:
             StatementInfo("甲子益乙子。", []),  # 甲 += 乙
         ])
         func = Function(info, None)
-        func.execute()
+        program = Program(ProgramInfo(info, []), PythonNativeIO())
+        Program._running = program
+        try:
+            func.execute()
+        finally:
+            Program._running = None
         assert func.context.get_variable("甲子").value.raw == 8
 
     def test_execute_文学语句被静默跳过(self):
@@ -72,7 +92,12 @@ class TestFunction:
             StatementInfo("乙子取甲子。", []),  # 再赋值
         ])
         func = Function(info, None)
-        func.execute()
+        program = Program(ProgramInfo(info, []), PythonNativeIO())
+        Program._running = program
+        try:
+            func.execute()
+        finally:
+            Program._running = None
         assert func.context.get_variable("甲子").value.raw == 10
         # 乙子 = 甲子（10）
         assert func.context.get_variable("乙子").value.raw == 10

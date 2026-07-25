@@ -18,6 +18,7 @@ from zhuziyayan.program_system.value import (
 )
 from zhuziyayan.translator.statement_info import StatementInfo
 from zhuziyayan.utils import (
+    format_chinese_integer,
     try_parse_boolean_input,
     try_parse_float_input,
     try_parse_integer_input,
@@ -43,6 +44,41 @@ class ComputeOperator(Enum):
 # _UNSUPPORTED — _compute 返回此值表示该类型不支持该运算
 _UNSUPPORTED = object()
 
+# _COMPUTE_OPERATOR_NAMES — 运算符的中文名映射
+_COMPUTE_OPERATOR_NAMES: dict[ComputeOperator, str] = {
+    ComputeOperator.ADD: "加",
+    ComputeOperator.SUB: "减",
+    ComputeOperator.MUL: "乘",
+    ComputeOperator.DIV: "除以",
+    ComputeOperator.MOD: "取模",
+}
+
+# _VALUE_TYPE_NAMES — ValueType 的中文名映射
+_VALUE_TYPE_NAMES: dict[ValueType, str] = {
+    ValueType.NONE: "无",
+    ValueType.STRING: "字符串",
+    ValueType.INTEGER: "整数",
+    ValueType.FLOAT: "浮点数",
+    ValueType.BOOLEAN: "布尔",
+    ValueType.STRING_LIST: "字符串列表",
+    ValueType.INTEGER_LIST: "整数列表",
+    ValueType.FLOAT_LIST: "浮点数列表",
+    ValueType.BOOLEAN_LIST: "布尔列表",
+}
+
+# _VALUE_TYPE_LABELS — ValueType 的简洁类型标签，用于【疏】
+_VALUE_TYPE_LABELS: dict[ValueType, str] = {
+    ValueType.NONE: "无",
+    ValueType.STRING: "言",
+    ValueType.INTEGER: "数",
+    ValueType.FLOAT: "度",
+    ValueType.BOOLEAN: "辩",
+    ValueType.STRING_LIST: "列言",
+    ValueType.INTEGER_LIST: "列数",
+    ValueType.FLOAT_LIST: "列度",
+    ValueType.BOOLEAN_LIST: "列辩",
+}
+
 
 # =============================================================================
 # Statement — 语句基类
@@ -53,21 +89,78 @@ class Statement(ABC):
     """语句基类。
 
     每条语句对应源码中的一条可执行单元，以终止符（。？！）结尾。
+    子类在 __init__ 中设置 _name 并通过 _register_detail() 注册执行细节。
     """
 
     def __init__(self, statement_info: StatementInfo, context: Context):
         self._statement_info = statement_info
         self._context = context
+        self._name: str = ""
+        self._details: dict[str, str] = {}
+
+    # -------------------------------------------------------------------------
+    # 只读属性
+    # -------------------------------------------------------------------------
 
     @property
     def statement_info(self) -> StatementInfo:
-        """该语句对应的源码文本。"""
+        """该语句对应的源码信息。"""
         return self._statement_info
+
+    @property
+    def name(self) -> str:
+        """语句类型的中文名（如 赋值、函数调用、条件判断）。"""
+        return self._name
+
+    @property
+    def details(self) -> dict[str, str]:
+        """执行细节的只读字典，键为属性名，值为字符串表示。"""
+        return dict(self._details)
+
+    # -------------------------------------------------------------------------
+    # 子类注册接口
+    # -------------------------------------------------------------------------
+
+    def _register_detail(self, key: str, value: str) -> None:
+        """子类在 __init__ 中调用，向 details 字典注册一条执行细节。"""
+        self._details[key] = value
+
+    @abstractmethod
+    def describe(self) -> tuple[str, str]:
+        """返回 (statement_description, change) 二元组。
+
+        在 run() 之后调用，change 通过查询 _context 获取执行后变量的当前值。
+        """
+        ...
 
     @abstractmethod
     def run(self):
         """运行该语句，修改 context 或造成其他副作用。绝不抛出异常。"""
         ...
+
+    # -------------------------------------------------------------------------
+    # 辅助方法
+    # -------------------------------------------------------------------------
+
+    def _variable_value_string(self, var_name: str) -> str:
+        """返回 '{变量名} = {类型标签} {字面量}'，通过查询 context 获取当前值。"""
+        if self._context.has_variable(var_name):
+            var = self._context.get_variable(var_name)
+            label = _VALUE_TYPE_LABELS.get(var.value.type, "")
+            literal = var.value.to_literal_string()
+            if var.value.type == ValueType.NONE:
+                return f"{var_name} = 无"
+            return f"{var_name} = {literal} {label}也"
+        return f"{var_name} = 无"
+
+    @staticmethod
+    def _describe_expression(expr: ValueExpression) -> str:
+        """返回 ValueExpression 的可读字符串表示。"""
+        if isinstance(expr, VariableExpression):
+            return expr.variable_name
+        elif isinstance(expr, ListIndexExpression):
+            return f"{expr.variable_name}之{format_chinese_integer(expr.index)}"
+        return str(expr)
 
 
 # =============================================================================
@@ -86,19 +179,18 @@ class VariableDefinitionStatement(Statement):
         super().__init__(statement_info, context)
         self._variable_name = variable_name
         self._value = value
-
-    @property
-    def variable_name(self) -> str:
-        """新变量的名称。"""
-        return self._variable_name
-
-    @property
-    def value(self) -> Value:
-        """变量的初始值（Value 对象）。"""
-        return self._value
+        self._name = "变量定义"
+        self._register_detail("变量名", variable_name)
+        self._register_detail("类型", _VALUE_TYPE_NAMES[value.type])
+        self._register_detail("初始值", value.to_literal_string())
 
     def run(self):
         self._context.set_variable(self._variable_name, self._value)
+
+    def describe(self) -> tuple[str, str]:
+        desc = f"定义{self._variable_name}为{self._value.to_literal_string()}"
+        change = self._variable_value_string(self._variable_name)
+        return desc, change
 
 
 # =============================================================================
@@ -117,16 +209,9 @@ class AssignmentStatement(Statement):
         super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
         self._source = source
-
-    @property
-    def target_variable_name(self) -> str:
-        """赋值目标变量名（左侧）。"""
-        return self._target_variable_name
-
-    @property
-    def source(self) -> ValueExpression:
-        """赋值来源表达式（右侧）。"""
-        return self._source
+        self._name = "赋值"
+        self._register_detail("目标变量", target_variable_name)
+        self._register_detail("来源", self._describe_expression(source))
 
     def run(self):
         if not self._context.has_variable(self._target_variable_name):
@@ -152,6 +237,12 @@ class AssignmentStatement(Statement):
         new_value = Value(source_value.type, raw)
         target_var.set_value(new_value)
 
+    def describe(self) -> tuple[str, str]:
+        source_desc = self._describe_expression(self._source)
+        desc = f"{self._target_variable_name}取{source_desc}"
+        change = self._variable_value_string(self._target_variable_name)
+        return desc, change
+
 
 # =============================================================================
 # 3. ComputeAssignmentStatement — 计算赋值
@@ -171,21 +262,10 @@ class ComputeAssignmentStatement(Statement):
         self._target_variable_name = target_variable_name
         self._operator = operator
         self._source = source
-
-    @property
-    def target_variable_name(self) -> str:
-        """运算目标变量名。"""
-        return self._target_variable_name
-
-    @property
-    def operator(self) -> ComputeOperator:
-        """运算符。"""
-        return self._operator
-
-    @property
-    def source(self) -> ValueExpression:
-        """运算右侧表达式。"""
-        return self._source
+        self._name = "计算赋值"
+        self._register_detail("目标变量", target_variable_name)
+        self._register_detail("运算符", _COMPUTE_OPERATOR_NAMES[operator])
+        self._register_detail("来源", self._describe_expression(source))
 
     def run(self):
         if not self._context.has_variable(self._target_variable_name):
@@ -263,6 +343,13 @@ class ComputeAssignmentStatement(Statement):
 
         return _UNSUPPORTED
 
+    def describe(self) -> tuple[str, str]:
+        op_name = _COMPUTE_OPERATOR_NAMES[self._operator]
+        source_desc = self._describe_expression(self._source)
+        desc = f"{self._target_variable_name}{op_name}{source_desc}"
+        change = self._variable_value_string(self._target_variable_name)
+        return desc, change
+
 
 # =============================================================================
 # 4. ZeroCheckStatement — 判零
@@ -279,11 +366,8 @@ class ZeroCheckStatement(Statement):
                  target_variable_name: str):
         super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
-
-    @property
-    def target_variable_name(self) -> str:
-        """被判断的变量名。"""
-        return self._target_variable_name
+        self._name = "判零"
+        self._register_detail("目标变量", target_variable_name)
 
     def run(self):
         if not self._context.has_variable(self._target_variable_name):
@@ -293,6 +377,11 @@ class ZeroCheckStatement(Statement):
         target_var = self._context.get_variable(self._target_variable_name)
         result = is_zero(target_var.value)
         target_var.set_value(Value(ValueType.BOOLEAN, result))
+
+    def describe(self) -> tuple[str, str]:
+        desc = f"判零{self._target_variable_name}"
+        change = self._variable_value_string(self._target_variable_name)
+        return desc, change
 
 
 # =============================================================================
@@ -310,11 +399,8 @@ class PositiveCheckStatement(Statement):
                  target_variable_name: str):
         super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
-
-    @property
-    def target_variable_name(self) -> str:
-        """被判断的变量名。"""
-        return self._target_variable_name
+        self._name = "判正"
+        self._register_detail("目标变量", target_variable_name)
 
     def run(self):
         if not self._context.has_variable(self._target_variable_name):
@@ -324,6 +410,11 @@ class PositiveCheckStatement(Statement):
         target_var = self._context.get_variable(self._target_variable_name)
         result = is_positive(target_var.value)
         target_var.set_value(Value(ValueType.BOOLEAN, result))
+
+    def describe(self) -> tuple[str, str]:
+        desc = f"判正{self._target_variable_name}"
+        change = self._variable_value_string(self._target_variable_name)
+        return desc, change
 
 
 # =============================================================================
@@ -344,21 +435,10 @@ class ListIndexModifyStatement(Statement):
         self._target_variable_name = target_variable_name
         self._index = index  # 1-based
         self._source = source
-
-    @property
-    def target_variable_name(self) -> str:
-        """目标列表变量名。"""
-        return self._target_variable_name
-
-    @property
-    def index(self) -> int:
-        """索引（1-based）。"""
-        return self._index
-
-    @property
-    def source(self) -> ValueExpression:
-        """新的元素值表达式。"""
-        return self._source
+        self._name = "列表索引修改"
+        self._register_detail("目标变量", target_variable_name)
+        self._register_detail("索引", format_chinese_integer(index))
+        self._register_detail("新值", self._describe_expression(source))
 
     def run(self):
         if not self._context.has_variable(self._target_variable_name):
@@ -387,6 +467,12 @@ class ListIndexModifyStatement(Statement):
 
         list_raw[zero_based] = new_value.raw
 
+    def describe(self) -> tuple[str, str]:
+        source_desc = self._describe_expression(self._source)
+        desc = f"{self._target_variable_name}之{format_chinese_integer(self._index)}改为{source_desc}"
+        change = self._variable_value_string(self._target_variable_name)
+        return desc, change
+
 
 # =============================================================================
 # 7. ListAppendStatement — 列表追加
@@ -404,16 +490,9 @@ class ListAppendStatement(Statement):
         super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
         self._source = source
-
-    @property
-    def target_variable_name(self) -> str:
-        """目标列表变量名。"""
-        return self._target_variable_name
-
-    @property
-    def source(self) -> ValueExpression:
-        """要追加的值表达式。"""
-        return self._source
+        self._name = "列表追加"
+        self._register_detail("目标列表", target_variable_name)
+        self._register_detail("追加值", self._describe_expression(source))
 
     def run(self):
         if not self._context.has_variable(self._target_variable_name):
@@ -435,6 +514,12 @@ class ListAppendStatement(Statement):
 
         target_var.value.raw.append(new_value.raw)
 
+    def describe(self) -> tuple[str, str]:
+        source_desc = self._describe_expression(self._source)
+        desc = f"{self._target_variable_name}追加{source_desc}"
+        change = self._variable_value_string(self._target_variable_name)
+        return desc, change
+
 
 # =============================================================================
 # 8. ListPopTailStatement — 删除尾部元素
@@ -451,11 +536,8 @@ class ListPopTailStatement(Statement):
                  target_variable_name: str):
         super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
-
-    @property
-    def target_variable_name(self) -> str:
-        """目标列表变量名。"""
-        return self._target_variable_name
+        self._name = "列表删尾"
+        self._register_detail("目标列表", target_variable_name)
 
     def run(self):
         if not self._context.has_variable(self._target_variable_name):
@@ -468,6 +550,11 @@ class ListPopTailStatement(Statement):
             return
 
         target_var.value.raw.pop()
+
+    def describe(self) -> tuple[str, str]:
+        desc = f"{self._target_variable_name}删尾"
+        change = self._variable_value_string(self._target_variable_name)
+        return desc, change
 
 
 # =============================================================================
@@ -485,11 +572,8 @@ class ListPopHeadStatement(Statement):
                  target_variable_name: str):
         super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
-
-    @property
-    def target_variable_name(self) -> str:
-        """目标列表变量名。"""
-        return self._target_variable_name
+        self._name = "列表删头"
+        self._register_detail("目标列表", target_variable_name)
 
     def run(self):
         if not self._context.has_variable(self._target_variable_name):
@@ -502,6 +586,11 @@ class ListPopHeadStatement(Statement):
             return
 
         target_var.value.raw.pop(0)
+
+    def describe(self) -> tuple[str, str]:
+        desc = f"{self._target_variable_name}删头"
+        change = self._variable_value_string(self._target_variable_name)
+        return desc, change
 
 
 # =============================================================================
@@ -520,27 +609,16 @@ class FunctionCallStatement(Statement):
                  function_name: str):
         super().__init__(statement_info, context)
         self._function_name = function_name
+        self._name = "函数调用"
+        self._register_detail("函数名", function_name)
 
-    @property
-    def function_name(self) -> str:
-        """被调用的函数名（不含《》）。"""
+    def run(self) -> str | None:
+        """返回需要调用的函数名，由上层 Function.execute() 负责实际调用。"""
         return self._function_name
 
-    def run(self):
-        from zhuziyayan.program_system.program import Program
-        from zhuziyayan.program_system.function import Function
-
-        program = Program.get_running()
-        if program is None:
-            raise RuntimeError("Program 实例不存在，无法执行函数调用语句")
-
-        function_info = program.get_function_info(self._function_name)
-        if function_info is None:
-            return
-
-        global_context = program.get_global_context()
-        func = Function(function_info, global_context)
-        func.execute()
+    def describe(self) -> tuple[str, str]:
+        desc = f"调用函数《{self._function_name}》"
+        return desc, ""
 
 
 # =============================================================================
@@ -560,40 +638,38 @@ class IfStatement(Statement):
         super().__init__(statement_info, context)
         self._condition_variable_name = condition_variable_name
         self._function_name = function_name
+        self._name = "条件判断"
+        self._register_detail("条件变量", condition_variable_name)
+        self._register_detail("调用的函数", function_name)
+        self._will_call: bool = False
 
-    @property
-    def condition_variable_name(self) -> str:
-        """条件变量名。"""
-        return self._condition_variable_name
+    def run(self) -> str | None:
+        """若条件为真则返回需要调用的函数名，否则返回 None。
 
-    @property
-    def function_name(self) -> str:
-        """条件为真时调用的函数名（不含《》）。"""
-        return self._function_name
-
-    def run(self):
+        由上层 Function.execute() 负责实际调用。
+        """
         if not self._context.has_variable(self._condition_variable_name):
-            return
+            self._will_call = False
+            return None
 
         cond_var = self._context.get_variable(self._condition_variable_name)
         if cond_var.value.type != ValueType.BOOLEAN:
-            return
+            self._will_call = False
+            return None
 
         if cond_var.value.raw:
-            from zhuziyayan.program_system.program import Program
-            from zhuziyayan.program_system.function import Function
+            self._will_call = True
+            return self._function_name
+        self._will_call = False
+        return None
 
-            program = Program.get_running()
-            if program is None:
-                raise RuntimeError("Program 实例不存在，无法执行条件调用语句")
-
-            function_info = program.get_function_info(self._function_name)
-            if function_info is None:
-                return
-
-            global_context = program.get_global_context()
-            func = Function(function_info, global_context)
-            func.execute()
+    def describe(self) -> tuple[str, str]:
+        desc = f"若{self._condition_variable_name}则调用《{self._function_name}》"
+        if self._will_call:
+            change = f"将调用《{self._function_name}》"
+        else:
+            change = "跳过"
+        return desc, change
 
 
 # =============================================================================
@@ -611,11 +687,8 @@ class OutputStatement(Statement):
                  target_variable_name: str):
         super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
-
-    @property
-    def target_variable_name(self) -> str:
-        """要输出的变量名。"""
-        return self._target_variable_name
+        self._name = "输出"
+        self._register_detail("输出变量", target_variable_name)
 
     def run(self):
         from zhuziyayan.program_system.program import Program
@@ -629,6 +702,11 @@ class OutputStatement(Statement):
 
         target_var = self._context.get_variable(self._target_variable_name)
         program.get_io_strategy().write_output(target_var.value.to_literal_string())
+
+    def describe(self) -> tuple[str, str]:
+        desc = f"输出{self._target_variable_name}"
+        change = self._variable_value_string(self._target_variable_name)
+        return desc, change
 
 
 # =============================================================================
@@ -657,16 +735,10 @@ class InputStatement(Statement):
         super().__init__(statement_info, context)
         self._target_variable_name = target_variable_name
         self._prompt = prompt
-
-    @property
-    def target_variable_name(self) -> str:
-        """接收输入的变量名。"""
-        return self._target_variable_name
-
-    @property
-    def prompt(self) -> str | None:
-        """输入前显示的提示字符串；无提示时为 None。"""
-        return self._prompt
+        self._name = "输入"
+        self._register_detail("输入变量", target_variable_name)
+        if prompt is not None:
+            self._register_detail("提示", prompt)
 
     def run(self):
         from zhuziyayan.program_system.program import Program
@@ -709,6 +781,11 @@ class InputStatement(Statement):
             # 列表类型无法输入
             target_var.set_value(Value(ValueType.NONE, None))
 
+    def describe(self) -> tuple[str, str]:
+        desc = f"输入{self._target_variable_name}"
+        change = self._variable_value_string(self._target_variable_name)
+        return desc, change
+
 
 # =============================================================================
 # 14. LiteraryStatement — 文学性语句
@@ -721,5 +798,12 @@ class LiteraryStatement(Statement):
     无法解析出任何含义的语句，运行时不产生任何效果。
     """
 
+    def __init__(self, statement_info: StatementInfo, context: Context):
+        super().__init__(statement_info, context)
+        self._name = "无操作"
+
     def run(self):
         pass
+
+    def describe(self) -> tuple[str, str]:
+        return "（无操作）", ""

@@ -3,6 +3,7 @@ from __future__ import annotations
 from zhuziyayan.program_system.context import Context
 from zhuziyayan.program_system.function import Function
 from zhuziyayan.program_system.io_strategy import IOStrategy
+from zhuziyayan.program_system.recorder import Recorder
 from zhuziyayan.translator.function_info import FunctionInfo
 from zhuziyayan.translator.program_info import ProgramInfo
 
@@ -19,11 +20,17 @@ class Program:
         self._program_info: ProgramInfo = program_info
         self._io_strategy: IOStrategy = io_strategy
         self._global_context: Context | None = None
+        self._recorder: Recorder = Recorder()
 
     @classmethod
     def get_running(cls) -> Program | None:
         """返回当前正在运行的 Program 实例。"""
         return cls._running
+
+    @property
+    def recorder(self) -> Recorder:
+        """代码复盘记录器。"""
+        return self._recorder
 
     def get_io_strategy(self) -> IOStrategy:
         """返回当前运行程序的 IO 策略。"""
