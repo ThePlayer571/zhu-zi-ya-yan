@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useProgramStore } from '../stores/program'
 import CodeEditor from './CodeEditor.vue'
 import RunButton from './RunButton.vue'
@@ -12,6 +12,12 @@ const activeTab = ref<'io' | 'trace'>('io')
 
 onMounted(() => {
   store.connect()
+})
+
+watch(() => store.isAwaitingInput, (val) => {
+  if (val) {
+    activeTab.value = 'io'
+  }
 })
 </script>
 

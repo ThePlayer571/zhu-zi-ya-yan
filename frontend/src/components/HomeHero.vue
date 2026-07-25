@@ -13,6 +13,13 @@ function scrollToEditor(): void {
     el.scrollIntoView({ behavior: 'smooth' })
   }
 }
+
+function scrollToChallenge(): void {
+  const el = document.getElementById('challenge-section')
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth' })
+  }
+}
 </script>
 
 <template>
@@ -138,14 +145,17 @@ function scrollToEditor(): void {
       </div>
 
       <!-- 滚动按钮 -->
-      <button class="scroll-btn" @click="scrollToEditor">
-        <span class="scroll-btn-pill">
-          <span class="scroll-label">试 之</span>
-          <svg class="scroll-arrow" viewBox="0 0 24 24" width="18" height="18">
-            <path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </span>
-      </button>
+      <div class="scroll-area">
+        <button class="scroll-btn" @click="scrollToEditor">
+          <span class="scroll-btn-pill">
+            <span class="scroll-label">试 之</span>
+            <svg class="scroll-arrow" viewBox="0 0 24 24" width="18" height="18">
+              <path d="M12 5v14M6 13l6 6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+        </button>
+        <span class="challenge-hint" @click="scrollToChallenge">闯关试炼 ↓</span>
+      </div>
     </div>
 
     <!-- 左右装饰 -->
@@ -616,6 +626,36 @@ function scrollToEditor(): void {
 .scroll-arrow {
   color: rgba(255, 255, 255, 0.65);
   flex-shrink: 0;
+}
+
+/* ---- Scroll Area Wrapper ---- */
+
+.scroll-area {
+  position: relative;
+  display: inline-flex;
+}
+
+/* ---- Challenge Hint ---- */
+
+.challenge-hint {
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--color-vermillion);
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: color 0.2s;
+  user-select: none;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.challenge-hint:hover {
+  color: var(--color-vermillion-dark);
 }
 
 /* ===================================================================

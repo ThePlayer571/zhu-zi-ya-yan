@@ -9,7 +9,7 @@ function goToChallenge(): void {
 </script>
 
 <template>
-  <section class="challenge-entry">
+  <section id="challenge-section" class="challenge-entry">
     <div class="entry-content">
       <h2 class="entry-title">闯关试炼</h2>
       <p class="entry-desc">

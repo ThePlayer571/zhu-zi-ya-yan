@@ -1,20 +1,23 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ProgramWebSocket } from '../api/websocket'
 import type { TraceEntry } from '../types'
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error'
 
+const STORAGE_KEY = 'zhuziyayan-source-code'
+
 export const useProgramStore = defineStore('program', () => {
   // ---- 状态 ------------------------------------------------------------
 
-  const sourceCode = ref('')
+  const sourceCode = ref(localStorage.getItem(STORAGE_KEY) ?? '')
   const output = ref<string[]>([])
   const isRunning = ref(false)
   const isAwaitingInput = ref(false)
   const inputPrompt = ref<string | null>(null)
   const traceEntries = ref<TraceEntry[]>([])
   const connectionStatus = ref<ConnectionStatus>('disconnected')
+  const hasJustFinished = ref(false)
 
   // ---- 计算属性 --------------------------------------------------------
 
@@ -23,6 +26,18 @@ export const useProgramStore = defineStore('program', () => {
   )
 
   const canCancel = computed(() => isRunning.value)
+
+  // ---- 源码监听 --------------------------------------------------------
+
+  watch(sourceCode, () => {
+    if (hasJustFinished.value) {
+      hasJustFinished.value = false
+    }
+  })
+
+  watch(sourceCode, (val) => {
+    localStorage.setItem(STORAGE_KEY, val)
+  })
 
   // ---- WebSocket 实例 --------------------------------------------------
 
@@ -54,11 +69,15 @@ export const useProgramStore = defineStore('program', () => {
         },
         onDone: () => {
           isRunning.value = false
+          hasJustFinished.value = true
+          wsClient?.close()
         },
         onError: (message) => {
           output.value.push(`[错误] ${message}`)
           isRunning.value = false
           isAwaitingInput.value = false
+          hasJustFinished.value = true
+          wsClient?.close()
         },
         onDisconnect: () => {
           isRunning.value = false
@@ -82,6 +101,7 @@ export const useProgramStore = defineStore('program', () => {
     traceEntries.value = []
     isAwaitingInput.value = false
     inputPrompt.value = null
+    hasJustFinished.value = false
 
     // 如果连接断开，先重连（包括取消后的重连）
     if (!wsClient.isConnected) {
@@ -126,6 +146,7 @@ export const useProgramStore = defineStore('program', () => {
     inputPrompt,
     traceEntries,
     connectionStatus,
+    hasJustFinished,
     // computed
     canRun,
     canCancel,

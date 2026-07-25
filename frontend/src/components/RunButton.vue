@@ -16,13 +16,25 @@ function handleClick(): void {
   <div class="run-bar">
     <button
       class="run-btn"
-      :class="{ running: store.isRunning }"
+      :class="{
+        running: store.isRunning,
+        finished: store.hasJustFinished && !store.isRunning
+      }"
       :disabled="!store.isRunning && !store.canRun"
       @click="handleClick"
     >
-      <span v-if="store.isRunning" class="spinner" />
-      <span v-if="!store.isRunning" class="btn-icon">▶</span>
-      {{ store.isRunning ? '终止' : '运行' }}
+      <template v-if="store.isRunning">
+        <span class="spinner" />
+        终止
+      </template>
+      <template v-else-if="store.hasJustFinished">
+        <span class="btn-icon-finish">✓</span>
+        运行结束
+      </template>
+      <template v-else>
+        <span class="btn-icon">▶</span>
+        运行
+      </template>
     </button>
   </div>
 </template>
@@ -72,8 +84,21 @@ function handleClick(): void {
   background: var(--color-ink);
 }
 
+.run-btn.finished {
+  background: var(--color-jade);
+}
+
+.run-btn.finished:hover:not(:disabled) {
+  background: var(--color-jade-dark);
+}
+
 .btn-icon {
   font-size: 10px;
+}
+
+.btn-icon-finish {
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .spinner {
