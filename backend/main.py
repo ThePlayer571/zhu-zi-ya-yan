@@ -70,9 +70,8 @@ def create_app(serve_static: bool = True) -> FastAPI:
     return app
 
 
-# Vercel 环境变量 VERCEL=1 由 Vercel 自动设置
-# 在 Vercel 上跳过静态文件挂载（由 CDN 提供），其他环境保持原有行为
-app = create_app(serve_static=not bool(os.getenv("VERCEL")))
+# 始终挂载前端静态文件，Vercel 环境下作为 CDN 的兜底
+app = create_app(serve_static=True)
 
 if __name__ == "__main__":
     import uvicorn
