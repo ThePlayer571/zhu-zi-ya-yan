@@ -7,10 +7,15 @@ export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'er
 
 const STORAGE_KEY = 'zhuziyayan-source-code'
 
+/** 首次访问时的默认示例代码。仅在用户从未编辑过时显示。 */
+const DEFAULT_CODE = `《论语》
+孔子曰学而时习之不亦说乎。
+曾子，孔子门人也。曾子效孔子之所言。曾子言其理。`
+
 export const useProgramStore = defineStore('program', () => {
   // ---- 状态 ------------------------------------------------------------
 
-  const sourceCode = ref(localStorage.getItem(STORAGE_KEY) ?? '')
+  const sourceCode = ref(localStorage.getItem(STORAGE_KEY) ?? DEFAULT_CODE)
   const output = ref<string[]>([])
   const isRunning = ref(false)
   const isAwaitingInput = ref(false)

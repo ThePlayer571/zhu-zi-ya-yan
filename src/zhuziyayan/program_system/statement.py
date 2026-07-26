@@ -252,7 +252,8 @@ class AssignmentStatement(Statement):
 class ComputeAssignmentStatement(Statement):
     """计算赋值语句。
 
-    对变量执行运算后将结果赋回原变量。
+    对变量执行 Python 运算，再将结果通过类型转换回原类型后赋回原变量。
+    若运算不支持或过程中出现任何错误，将目标变量置为 None。
     """
 
     def __init__(self, statement_info: StatementInfo, context: Context,
@@ -284,64 +285,64 @@ class ComputeAssignmentStatement(Statement):
             self._context.set_to_none(self._target_variable_name)
             return
 
-        raw_result = self._compute(lhs.raw, rhs.raw, lhs.type)
+        # 执行 Python 运算，捕获运行时异常（如除零、类型不兼容等）
+        # noinspection broad-exception
+        try:
+            raw_result = self._compute(lhs.raw, rhs.raw, lhs.type)
+        except Exception:
+            self._context.set_to_none(self._target_variable_name)
+            return
+
         if raw_result is _UNSUPPORTED:
             self._context.set_to_none(self._target_variable_name)
             return
 
-        new_value = Value(lhs.type, raw_result)
+        # 将运算结果通过类型转换回原类型
+        # noinspection broad-exception
+        try:
+            converted = self._convert_to_type(raw_result, lhs.type)
+            new_value = Value(lhs.type, converted)
+        except Exception:
+            self._context.set_to_none(self._target_variable_name)
+            return
+
         target_var.set_value(new_value)
 
+    @staticmethod
+    def _convert_to_type(raw, value_type: ValueType):
+        """将 Python 运算的中间结果转换回目标类型。"""
+        if value_type == ValueType.INTEGER:
+            return int(raw)
+        elif value_type == ValueType.FLOAT:
+            return float(raw)
+        elif value_type == ValueType.BOOLEAN:
+            return bool(raw)
+        elif value_type == ValueType.STRING:
+            return str(raw)
+        else:
+            # 列表等复合类型，raw 已是正确的 Python 对象
+            return raw
+
     def _compute(self, lhs_raw, rhs_raw, value_type: ValueType):
-        """根据运算符和类型执行计算。
+        """执行纯 Python 运算并返回中间结果。
 
         若该类型不支持此运算，返回 _UNSUPPORTED。
+        此方法不进行类型转换——类型转换由 _convert_to_type 负责。
         """
         op = self._operator
 
-        if value_type == ValueType.INTEGER:
-            if op == ComputeOperator.ADD:
-                return lhs_raw + rhs_raw
-            elif op == ComputeOperator.SUB:
-                return lhs_raw - rhs_raw
-            elif op == ComputeOperator.MUL:
-                return lhs_raw * rhs_raw
-            elif op == ComputeOperator.DIV:
-                return lhs_raw // rhs_raw
-            elif op == ComputeOperator.MOD:
-                return lhs_raw % rhs_raw
-
-        elif value_type == ValueType.FLOAT:
-            if op == ComputeOperator.ADD:
-                return lhs_raw + rhs_raw
-            elif op == ComputeOperator.SUB:
-                return lhs_raw - rhs_raw
-            elif op == ComputeOperator.MUL:
-                return lhs_raw * rhs_raw
-            elif op == ComputeOperator.DIV:
-                return lhs_raw / rhs_raw
-            elif op == ComputeOperator.MOD:
-                return lhs_raw % rhs_raw
-
-        elif value_type == ValueType.STRING:
-            if op == ComputeOperator.ADD:
-                return lhs_raw + rhs_raw
+        if op == ComputeOperator.ADD:
+            return lhs_raw + rhs_raw
+        elif op == ComputeOperator.SUB:
+            return lhs_raw - rhs_raw
+        elif op == ComputeOperator.MUL:
+            return lhs_raw * rhs_raw
+        elif op == ComputeOperator.DIV:
+            return lhs_raw // rhs_raw
+        elif op == ComputeOperator.MOD:
+            return lhs_raw % rhs_raw
+        else:
             return _UNSUPPORTED
-
-        elif value_type == ValueType.BOOLEAN:
-            if op == ComputeOperator.ADD:
-                return bool(lhs_raw + rhs_raw)
-            return _UNSUPPORTED
-
-        elif value_type in (
-                ValueType.STRING_LIST, ValueType.INTEGER_LIST,
-                ValueType.FLOAT_LIST, ValueType.BOOLEAN_LIST,
-        ):
-            if op == ComputeOperator.ADD:
-                return lhs_raw + rhs_raw
-            return _UNSUPPORTED
-
-        return _UNSUPPORTED
 
     def describe(self) -> tuple[str, str]:
         op_name = _COMPUTE_OPERATOR_NAMES[self._operator]

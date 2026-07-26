@@ -8,19 +8,30 @@ from zhuziyayan.translator.function_info import FunctionInfo
 from zhuziyayan.translator.program_info import ProgramInfo
 
 
+class StatementLimitExceededError(Exception):
+    """语句执行数超过上限时抛出。"""
+
+    def __init__(self, limit: int):
+        self.limit = limit
+        super().__init__(f"语句执行数超过上限 {limit}，可能存在死循环，已强制停止。")
+
+
 class Program:
     """程序运行的环境。
 
-    单例模式——同时只允许运行一个程序。。
+    单例模式——同时只允许运行一个程序。
     """
 
     _running: Program | None = None
 
-    def __init__(self, program_info: ProgramInfo, io_strategy: IOStrategy):
+    def __init__(self, program_info: ProgramInfo, io_strategy: IOStrategy,
+                 max_statements: int | None = None):
         self._program_info: ProgramInfo = program_info
         self._io_strategy: IOStrategy = io_strategy
         self._global_context: Context | None = None
         self._recorder: Recorder = Recorder()
+        self._max_statements: int | None = max_statements
+        self._statement_count: int = 0
 
     @classmethod
     def get_running(cls) -> Program | None:
@@ -46,6 +57,17 @@ class Program:
             "global_context is only available while a program is running"
         )
         return self._global_context
+
+    def increment_statement_count(self):
+        """递增语句执行计数，若超过上限则抛出 StatementLimitExceededError。
+
+        上限为 None 时不做任何检查（默认禁用）。
+        """
+        if self._max_statements is None:
+            return
+        self._statement_count += 1
+        if self._statement_count > self._max_statements:
+            raise StatementLimitExceededError(self._max_statements)
 
     def get_function_info(self, name: str) -> FunctionInfo | None:
         """按函数名查找 FunctionInfo。

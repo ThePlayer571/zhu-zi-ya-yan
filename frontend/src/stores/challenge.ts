@@ -144,6 +144,9 @@ export const useChallengeStore = defineStore('challenge', () => {
     // 从持久化存储恢复代码
     const savedCode = loadCodeForLevel(level.id)
     currentCode.value = savedCode ?? level.templateCode ?? '《试炼》\n  \n'
+    // 设置默认预置输入：第一个测试用例的输入
+    const firstCase = level.testCases[0]
+    userInputsText.value = firstCase?.inputs?.join('、') ?? ''
     // 重置运行状态
     resetInteractiveState()
     submitResult.value = null

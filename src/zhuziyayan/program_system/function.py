@@ -58,6 +58,8 @@ class Function:
 
         # 逐条执行语句
         for statement_info in self._info.statements:
+            program.increment_statement_count()
+
             statement: Statement = statement_decider.decide(
                 statement_info, self._context
             )

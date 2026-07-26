@@ -12,6 +12,9 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from backend.services.runner import run_program
 from backend.services.web_io import ThreadedIOStrategy
 
+# Web 端最大语句执行数，防止死循环
+_MAX_STATEMENTS = 999
+
 router = APIRouter()
 
 
@@ -60,7 +63,8 @@ async def websocket_endpoint(websocket: WebSocket):
         def run_in_thread():
             """在后台线程中执行程序。"""
             try:
-                entries = run_program(source_code, io_strategy)
+                entries = run_program(source_code, io_strategy,
+                                      max_statements=_MAX_STATEMENTS)
                 # 用 call_soon_threadsafe 安全地放入 asyncio 队列
                 trace_queue.put_nowait(entries)
             except Exception as e:

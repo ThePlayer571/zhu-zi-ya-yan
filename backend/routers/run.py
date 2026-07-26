@@ -9,6 +9,10 @@ from fastapi import APIRouter
 from backend.models.schemas import RunRequest, RunResponse, RunTestRequest, RunTestResponse
 from backend.services.runner import run_program
 from backend.services.list_io import ListInputIO
+from zhuziyayan.program_system.program import StatementLimitExceededError
+
+# Web 端最大语句执行数，防止死循环
+_MAX_STATEMENTS = 999
 
 
 class _NonInteractiveIO:
@@ -61,7 +65,15 @@ async def run_endpoint(request: RunRequest):
         )
 
     io_strategy = _NonInteractiveIO()
-    entries = run_program(source_code, io_strategy)
+    try:
+        entries = run_program(source_code, io_strategy, max_statements=_MAX_STATEMENTS)
+    except StatementLimitExceededError as e:
+        return RunResponse(
+            success=False,
+            output=io_strategy.outputs,
+            trace={"entries": []},
+            error=str(e),
+        )
 
     return RunResponse(
         success=True,
@@ -87,7 +99,15 @@ async def run_test_endpoint(request: RunTestRequest):
         )
 
     io_strategy = ListInputIO(request.inputs)
-    entries = run_program(source_code, io_strategy)
+    try:
+        entries = run_program(source_code, io_strategy, max_statements=_MAX_STATEMENTS)
+    except StatementLimitExceededError as e:
+        return RunTestResponse(
+            success=False,
+            output=io_strategy.outputs,
+            trace={"entries": []},
+            error=str(e),
+        )
 
     return RunTestResponse(
         success=True,

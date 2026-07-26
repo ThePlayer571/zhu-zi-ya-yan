@@ -104,6 +104,15 @@ function handleCodeUpdate(code: string): void {
           ✓ 已通关
         </span>
       </div>
+      <a
+        class="cl-doc-link"
+        href="https://github.com/ThePlayer571/zhu-zi-ya-yan/blob/master/docs/tutorial.md"
+        target="_blank"
+        title="诸子雅言教程"
+      >
+        <span class="doc-icon">📜</span>
+        <span>文档</span>
+      </a>
       <button
         v-if="nextLevel"
         class="cl-next-btn"
@@ -450,6 +459,32 @@ function handleCodeUpdate(code: string): void {
   font-family: var(--font-display);
 }
 
+.cl-doc-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-jade);
+  text-decoration: none;
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(91, 140, 90, 0.25);
+  transition: all 0.2s;
+  font-family: var(--font-display);
+  flex-shrink: 0;
+}
+
+.cl-doc-link:hover {
+  background: rgba(91, 140, 90, 0.08);
+  color: var(--color-jade-dark);
+  border-color: rgba(91, 140, 90, 0.4);
+}
+
+.doc-icon {
+  font-size: 13px;
+}
+
 .cl-completed-badge {
   font-size: 12px;
   font-weight: 600;
@@ -598,17 +633,20 @@ function handleCodeUpdate(code: string): void {
 
 .cl-right {
   width: 55%;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  grid-template-columns: 1fr;
   min-height: 0;
+  overflow: hidden;
   background: #fff;
 }
 
 .code-section {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  height: clamp(400px, 54vh, 680px);
   min-height: 0;
+  overflow: hidden;
 }
 
 /* ---- Run Bar ---- */
@@ -701,7 +739,6 @@ function handleCodeUpdate(code: string): void {
 /* ---- Tab Panel Container ---- */
 
 .tab-panel-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -1031,6 +1068,10 @@ function handleCodeUpdate(code: string): void {
 
   .cl-right {
     min-height: 60vh;
+  }
+
+  .code-section {
+    height: clamp(290px, 50vh, 400px);
   }
 }
 </style>
