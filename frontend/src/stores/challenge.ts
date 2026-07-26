@@ -10,7 +10,6 @@ import type {
   DifficultyGroup,
   TitleInfo,
   TraceEntry,
-  RunResponse,
   RunTestResponse,
   TestCaseResult,
   SubmitResult,
@@ -192,21 +191,19 @@ export const useChallengeStore = defineStore('challenge', () => {
     // 重置状态
     resetInteractiveState()
 
-    // Vercel 部署：使用 REST API
+    // Vercel 部署：使用 REST API（run-test 支持带输入的程序）
     if (__VERCEL__) {
       isInteractiveRunning.value = true
       try {
-        const resp = await fetch('/api/run', {
+        const resp = await fetch('/api/run-test', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ source_code: code }),
+          body: JSON.stringify({ source_code: code, inputs: [] }),
         })
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-        const data: RunResponse = await resp.json()
+        const data: RunTestResponse = await resp.json()
 
-        if (data.requires_input) {
-          interactiveOutput.value.push('[提示] 交互模式在 Vercel 部署中暂不可用，请使用「提交」按钮运行测试用例。')
-        } else if (data.error) {
+        if (data.error) {
           interactiveOutput.value.push(`[错误] ${data.error}`)
         } else {
           interactiveOutput.value = data.output ?? []
