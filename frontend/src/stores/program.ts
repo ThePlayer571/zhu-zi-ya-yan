@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed, watch } from 'vue'
 import { ProgramWebSocket } from '../api/websocket'
-import type { TraceEntry } from '../types'
+import type { TraceEntry, RunResponse } from '../types'
 
 export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error'
 
@@ -53,8 +53,13 @@ export const useProgramStore = defineStore('program', () => {
 
   // ---- Actions ---------------------------------------------------------
 
-  /** 连接 WebSocket 服务器。页面加载时调用一次即可。 */
+  /** 连接 WebSocket 服务器。Vercel 部署时为 no-op（WebSocket 不可用）。 */
   async function connect(): Promise<void> {
+    if (__VERCEL__) {
+      connectionStatus.value = 'disconnected'
+      return
+    }
+
     if (wsClient?.isConnected) return
 
     wsClient = new ProgramWebSocket(getWsUrl())
@@ -91,9 +96,8 @@ export const useProgramStore = defineStore('program', () => {
     }
   }
 
-  /** 运行程序。 */
+  /** 运行程序。Vercel 部署时使用 REST API 替代 WebSocket。 */
   async function runProgram(): Promise<void> {
-    if (!wsClient) return
     const code = sourceCode.value.trim()
     if (!code) return
     if (isRunning.value) return
@@ -104,6 +108,38 @@ export const useProgramStore = defineStore('program', () => {
     isAwaitingInput.value = false
     inputPrompt.value = null
     hasJustFinished.value = false
+
+    // Vercel 部署：使用 REST API
+    if (__VERCEL__) {
+      isRunning.value = true
+      try {
+        const resp = await fetch('/api/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source_code: code }),
+        })
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+        const data: RunResponse = await resp.json()
+
+        if (data.requires_input) {
+          output.value.push('[提示] 此程序包含输入语句（问/询/质/听/闻）。交互式输入在 Vercel 部署中暂不可用，请使用本地或 Render 部署体验完整功能。')
+        } else if (data.error) {
+          output.value.push(`[错误] ${data.error}`)
+        } else {
+          output.value = data.output ?? []
+          traceEntries.value = data.trace?.entries ?? []
+        }
+      } catch (e) {
+        output.value.push(`[错误] 请求失败：${e instanceof Error ? e.message : '未知错误'}`)
+      } finally {
+        isRunning.value = false
+        hasJustFinished.value = true
+      }
+      return
+    }
+
+    // WebSocket 模式（本地 / Render）
+    if (!wsClient) return
 
     // 如果连接断开，先重连（包括取消后的重连）
     if (!wsClient.isConnected) {
@@ -120,13 +156,21 @@ export const useProgramStore = defineStore('program', () => {
 
   /** 取消运行。关闭 WebSocket 连接。 */
   function cancelProgram(): void {
+    if (__VERCEL__) {
+      isRunning.value = false
+      isAwaitingInput.value = false
+      return
+    }
+
     wsClient?.close()
     isRunning.value = false
     isAwaitingInput.value = false
   }
 
-  /** 提供输入。 */
+  /** 提供输入。Vercel 部署时为 no-op。 */
   function provideInput(text: string): void {
+    if (__VERCEL__) return
+
     if (!isAwaitingInput.value || !wsClient) return
     wsClient.sendInput(text)
     isAwaitingInput.value = false

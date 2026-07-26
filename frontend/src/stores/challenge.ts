@@ -10,6 +10,7 @@ import type {
   DifficultyGroup,
   TitleInfo,
   TraceEntry,
+  RunResponse,
   RunTestResponse,
   TestCaseResult,
   SubmitResult,
@@ -181,7 +182,7 @@ export const useChallengeStore = defineStore('challenge', () => {
 
   // ---- Actions：交互运行（WebSocket）--------------------------------------
 
-  /** 交互运行程序。 */
+  /** 交互运行程序。Vercel 部署时使用 REST API 替代 WebSocket。 */
   async function runInteractive(): Promise<void> {
     if (!currentLevel.value || isInteractiveRunning.value) return
 
@@ -190,6 +191,35 @@ export const useChallengeStore = defineStore('challenge', () => {
 
     // 重置状态
     resetInteractiveState()
+
+    // Vercel 部署：使用 REST API
+    if (__VERCEL__) {
+      isInteractiveRunning.value = true
+      try {
+        const resp = await fetch('/api/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source_code: code }),
+        })
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+        const data: RunResponse = await resp.json()
+
+        if (data.requires_input) {
+          interactiveOutput.value.push('[提示] 交互模式在 Vercel 部署中暂不可用，请使用「提交」按钮运行测试用例。')
+        } else if (data.error) {
+          interactiveOutput.value.push(`[错误] ${data.error}`)
+        } else {
+          interactiveOutput.value = data.output ?? []
+          interactiveTrace.value = data.trace?.entries ?? []
+        }
+      } catch (e) {
+        interactiveOutput.value.push(`[错误] 请求失败：${e instanceof Error ? e.message : '未知错误'}`)
+      } finally {
+        isInteractiveRunning.value = false
+        hasJustFinished.value = true
+      }
+      return
+    }
 
     // 创建连接
     wsClient = new ProgramWebSocket(getWsUrl())
@@ -232,6 +262,12 @@ export const useChallengeStore = defineStore('challenge', () => {
 
   /** 取消交互运行。 */
   function cancelInteractive(): void {
+    if (__VERCEL__) {
+      isInteractiveRunning.value = false
+      isAwaitingInput.value = false
+      return
+    }
+
     wsClient?.close()
     isInteractiveRunning.value = false
     isAwaitingInput.value = false

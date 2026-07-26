@@ -1,56 +1,7 @@
 # 待办
 
-## 需求
+这个项目我是按照部署到render上的目标编写的，由backend/main.py驱动前端运行。
+现在我想部署至vercel了，由于vercel是没有stratCommand的，你需要修改这个项目，使其能部署至vercel。
+然后在根目录下创建一个README.md分别描述怎么在本地运行和怎么在vercel上部署。
 
-- [x] 编写完整的闯关关卡内容（21 关）
-- [x] 参考已有题目的语言风格：稍带古文风格，但不至于让现代人看不懂
-- [x] 题目标题和内容描述自己设计
-- [x] 给题目想出背景来（开蒙题不需要背景）
-
-## 新增难度
-
-- [x] 添加难度「乡试」，通过后成为「举人」
-
-### 开蒙题（6 关）
-
-- [x] ~~输出你好世界~~ → 「初试啼声」重命名，输出「诸子雅言」
-- [x] 重复输入 → 「回响之问」（保留并优化）
-- [x] 相反顺序输出 → 「倒言其序」：两个整数，相反次序输出
-- [x] 加法 → 「合而计之」：两个整数相加
-- [x] 条件分支 → 「择善而从」：布尔值，真输出「王道」，否输出「霸道」
-- [x] 拼接字符串 → 「珠联璧合」：两个字符串拼接
-
-### 院试题（7 关）
-
-- [x] 「中庸之道」：两个浮点数求平均值
-- [x] 「先长后幼」：两个整数，先大后小输出
-- [x] 「执中守五」：三个数中等于五的数量
-- [x] 「三才列序」：三个整数从大到小排序
-- [x] 「阴阳之辨」：判断奇偶，输出对应布尔值
-- [x] 「闻新录异」：五个整数，去重输出
-- [x] 「指月之指」：第 n 个整数
-
-### 乡试题（6 关）
-
-- [x] 「累土成山」：前 n 项和
-- [x] 「聚沙成塔」：k 个整数求和
-- [x] 「指数之威」：a**b
-- [x] 「倒诵如流」：k 个字符串倒序输出
-- [x] 「按图索骥」：寻找等于 k 的数的位置
-- [x] 「市鸡之算」：n 钱买 m 价之鸡，能买几只
-
-### 殿试题（2 关）
-
-- [x] 「兔数之列」：斐波那契数列第 k 项
-- [x] 「素心可鉴」：判断素数
-
-## 代码变更汇总
-
-| 文件 | 变更 |
-|------|------|
-| `frontend/src/types/index.ts` | DifficultyGroup 添加 `'乡试'`；DIFFICULTY_TITLES 添加举人头衔 |
-| `frontend/src/stores/challenge.ts` | levelsByGroup 添加 `'乡试': []` |
-| `frontend/src/views/ChallengeSelect.vue` | groups 数组添加 `'乡试'` |
-| `frontend/src/views/ChallengeLevel.vue` | 添加 `.cl-difficulty.乡试` CSS 类（靛蓝色） |
-| `frontend/public/challenges/index.json` | 完整重写，21 道关卡 |
-| `frontend/public/challenges/README.md` | 更新难度组别表，添加乡试/举人 |
+背景：现在的start command是`uvicorn backend.main:app --host 0.0.0.0 --port $PORT`。build command是`pip install -r requirements.txt`。
