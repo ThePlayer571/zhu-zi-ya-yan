@@ -6,7 +6,7 @@
 
 ### 环境要求
 
-- **Python** 3.12+ （TODO 使用conda）
+- **Python** 3.11+ （TODO 使用conda）
 - **Node.js** 22+
 
 ### 1. 安装 Python 依赖
