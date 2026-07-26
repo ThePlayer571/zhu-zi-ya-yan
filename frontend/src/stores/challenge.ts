@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { ProgramWebSocket } from '../api/websocket'
 import {
   DIFFICULTY_TITLES,
 } from '../types'
@@ -19,9 +18,6 @@ const API_BASE = ''
 const COMPLETED_STORAGE_KEY = 'zhuziyayan-challenge-completed'
 const CODE_STORAGE_PREFIX = 'zhuziyayan-challenge-code-'
 
-/** 连接状态。 */
-export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error'
-
 export const useChallengeStore = defineStore('challenge', () => {
   // ---- 关卡数据状态 ----------------------------------------------------
 
@@ -39,31 +35,22 @@ export const useChallengeStore = defineStore('challenge', () => {
   const currentLevel = ref<ChallengeLevel | null>(null)
   const currentCode = ref('')
 
-  // ---- 交互运行状态（WebSocket）----------------------------------------
+  // ---- 交互运行状态 ------------------------------------------------
 
   const interactiveOutput = ref<string[]>([])
   const isInteractiveRunning = ref(false)
   const isAwaitingInput = ref(false)
   const inputPrompt = ref<string | null>(null)
   const interactiveTrace = ref<TraceEntry[]>([])
-  const connectionStatus = ref<ConnectionStatus>('disconnected')
   const hasJustFinished = ref(false)
+
+  /** 用户预置的输入文本（以、分隔），在交互台中编辑。 */
+  const userInputsText = ref('')
 
   // ---- 提交状态（REST）------------------------------------------------
 
   const isSubmitting = ref(false)
   const submitResult = ref<SubmitResult | null>(null)
-
-  // ---- WebSocket 实例 --------------------------------------------------
-
-  let wsClient: ProgramWebSocket | null = null
-
-  function getWsUrl(): string {
-    const envUrl: string | undefined = (import.meta as unknown as { env: Record<string, string> }).env?.VITE_WS_URL
-    if (envUrl) return envUrl
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    return `${protocol}//${window.location.host}/ws/run`
-  }
 
   // ---- 计算属性 --------------------------------------------------------
 
@@ -179,103 +166,57 @@ export const useChallengeStore = defineStore('challenge', () => {
     return currentLevel.value?.hint ?? null
   }
 
-  // ---- Actions：交互运行（WebSocket）--------------------------------------
+  // ---- Actions：交互运行（REST）------------------------------------------
 
-  /** 交互运行程序。Vercel 部署时使用 REST API 替代 WebSocket。 */
+  /** 运行程序（使用 REST API，支持预置输入）。 */
   async function runInteractive(): Promise<void> {
     if (!currentLevel.value || isInteractiveRunning.value) return
 
     const code = currentCode.value.trim()
     if (!code) return
 
+    // 解析用户预置输入
+    const inputs = userInputsText.value
+      .split('、')
+      .map(s => s.trim())
+      .filter(s => s.length > 0)
+
     // 重置状态
     resetInteractiveState()
-
-    // Vercel 部署：使用 REST API（run-test 支持带输入的程序）
-    if (__VERCEL__) {
-      isInteractiveRunning.value = true
-      try {
-        const resp = await fetch('/api/run-test', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ source_code: code, inputs: [] }),
-        })
-        if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
-        const data: RunTestResponse = await resp.json()
-
-        if (data.error) {
-          interactiveOutput.value.push(`[错误] ${data.error}`)
-        } else {
-          interactiveOutput.value = data.output ?? []
-          interactiveTrace.value = data.trace?.entries ?? []
-        }
-      } catch (e) {
-        interactiveOutput.value.push(`[错误] 请求失败：${e instanceof Error ? e.message : '未知错误'}`)
-      } finally {
-        isInteractiveRunning.value = false
-        hasJustFinished.value = true
-      }
-      return
-    }
-
-    // 创建连接
-    wsClient = new ProgramWebSocket(getWsUrl())
-    try {
-      await wsClient.connect({
-        onStatusChange: (status) => { connectionStatus.value = status },
-        onOutput: (text) => { interactiveOutput.value.push(text) },
-        onInputPrompt: (prompt) => {
-          isAwaitingInput.value = true
-          inputPrompt.value = prompt
-        },
-        onTrace: (entries) => {
-          interactiveTrace.value = entries
-        },
-        onDone: () => {
-          isInteractiveRunning.value = false
-          hasJustFinished.value = true
-          wsClient?.close()
-        },
-        onError: (message) => {
-          interactiveOutput.value.push(`[错误] ${message}`)
-          isInteractiveRunning.value = false
-          isAwaitingInput.value = false
-          hasJustFinished.value = true
-          wsClient?.close()
-        },
-        onDisconnect: () => {
-          isInteractiveRunning.value = false
-          isAwaitingInput.value = false
-        },
-      })
-    } catch {
-      interactiveOutput.value.push('[错误] 无法连接到服务器，请确认后端已启动')
-      return
-    }
-
     isInteractiveRunning.value = true
-    wsClient.sendSourceCode(code)
+
+    try {
+      const resp = await fetch(`${API_BASE}/api/run-test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_code: code, inputs }),
+      })
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`)
+      const data: RunTestResponse = await resp.json()
+
+      if (data.error) {
+        interactiveOutput.value.push(`[错误] ${data.error}`)
+      } else {
+        interactiveOutput.value = data.output ?? []
+        interactiveTrace.value = data.trace?.entries ?? []
+      }
+    } catch (e) {
+      interactiveOutput.value.push(`[错误] 请求失败：${e instanceof Error ? e.message : '未知错误'}`)
+    } finally {
+      isInteractiveRunning.value = false
+      hasJustFinished.value = true
+    }
   }
 
-  /** 取消交互运行。 */
+  /** 取消交互运行（REST 模式下仅重置状态）。 */
   function cancelInteractive(): void {
-    if (__VERCEL__) {
-      isInteractiveRunning.value = false
-      isAwaitingInput.value = false
-      return
-    }
-
-    wsClient?.close()
     isInteractiveRunning.value = false
     isAwaitingInput.value = false
   }
 
-  /** 提供输入。 */
-  function provideInput(text: string): void {
-    if (!isAwaitingInput.value || !wsClient) return
-    wsClient.sendInput(text)
-    isAwaitingInput.value = false
-    inputPrompt.value = null
+  /** 提供输入（REST 模式下不会触发，保留以兼容 InputPrompt 组件）。 */
+  function provideInput(_text: string): void {
+    // REST 模式下程序一次性运行完毕，无交互式输入
   }
 
   // ---- Actions：提交（REST 批量运行测试用例）-------------------------------
@@ -423,8 +364,8 @@ export const useChallengeStore = defineStore('challenge', () => {
     isAwaitingInput,
     inputPrompt,
     interactiveTrace,
-    connectionStatus,
     hasJustFinished,
+    userInputsText,
     // state — 提交
     isSubmitting,
     submitResult,

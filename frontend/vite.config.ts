@@ -9,4 +9,15 @@ export default defineConfig({
     // 本地构建时为 false，WebSocket 代码路径保持不变
     __VERCEL__: process.env.VERCEL ? 'true' : 'false',
   },
+  server: {
+    proxy: {
+      // 将 /api REST 请求转发到后端
+      '/api': 'http://localhost:8000',
+      // 将 /ws WebSocket 请求转发到后端
+      '/ws': {
+        target: 'ws://localhost:8000',
+        ws: true,
+      },
+    },
+  },
 })

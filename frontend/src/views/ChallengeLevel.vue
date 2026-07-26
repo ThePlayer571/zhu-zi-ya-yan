@@ -32,6 +32,8 @@ async function loadCurrentLevel(): Promise<void> {
   if (level) {
     store.setCurrentLevel(level)
   }
+  // 切换关卡时自动隐藏提示，防止干扰
+  showHint.value = false
 }
 
 onMounted(() => {
@@ -203,14 +205,7 @@ function handleCodeUpdate(code: string): void {
               </template>
             </button>
           </div>
-          <div class="run-bar-right">
-            <span
-              v-if="store.connectionStatus === 'connected' && !store.isInteractiveRunning"
-              class="conn-status connected"
-            >
-              已连接
-            </span>
-          </div>
+          <div class="run-bar-right" />
         </div>
 
         <!-- 选项卡面板：交互台 / 经注疏 / 结果 -->
@@ -258,6 +253,22 @@ function handleCodeUpdate(code: string): void {
 
           <!-- 交互台面板 -->
           <div v-show="activeTab === 'io'" class="tab-panel io-panel">
+            <!-- 预置输入编辑区 -->
+            <div class="pre-input-area">
+              <div class="pre-input-header">
+                <span class="pre-input-icon">◆</span>
+                <span>预置输入</span>
+                <span class="pre-input-hint">以「、」分隔多个输入</span>
+              </div>
+              <input
+                v-model="store.userInputsText"
+                type="text"
+                class="pre-input-field"
+                placeholder="例如：三、五、七"
+                :disabled="store.isInteractiveRunning"
+                @keyup.enter="store.runInteractive()"
+              />
+            </div>
             <OutputDisplay :lines="store.interactiveOutput" />
             <InputPrompt
               :visible="store.isAwaitingInput"
@@ -624,18 +635,6 @@ function handleCodeUpdate(code: string): void {
   align-items: center;
 }
 
-.conn-status {
-  font-size: 11px;
-  font-family: var(--font-body);
-  padding: 3px 10px;
-  border-radius: 10px;
-}
-
-.conn-status.connected {
-  color: var(--color-jade);
-  background: rgba(91, 140, 90, 0.08);
-}
-
 .run-btn {
   display: inline-flex;
   align-items: center;
@@ -783,18 +782,62 @@ function handleCodeUpdate(code: string): void {
   overflow: hidden;
 }
 
-.io-panel {
-  display: flex;
-  flex-direction: column;
+/* .io-panel 和 .trace-panel-inner 继承 .tab-panel 的 flex 布局，保持顶部位置不变 */
+
+/* ---- 预置输入区 ---- */
+
+.pre-input-area {
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--color-border-light);
+  background: #fdfcf7;
 }
 
-.trace-panel-inner {
-  overflow: hidden;
+.pre-input-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-slate);
+  font-family: var(--font-display);
+}
+
+.pre-input-icon {
+  color: var(--color-gold);
+  font-size: 10px;
+}
+
+.pre-input-hint {
+  font-weight: 400;
+  color: var(--color-slate-light);
+  font-size: 11px;
+  margin-left: auto;
+}
+
+.pre-input-field {
+  width: 100%;
+  padding: 6px 16px 10px;
+  font-size: 15px;
+  font-family: var(--font-code);
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--color-ink);
+}
+
+.pre-input-field::placeholder {
+  color: #d1cbc0;
+}
+
+.pre-input-field:disabled {
+  opacity: 0.5;
 }
 
 /* ---- Results Panel ---- */
 
 .results-panel {
+  /* 继承 .tab-panel 的 flex 布局；仅覆盖 overflow 允许内容滚动 */
   overflow-y: auto;
   background: #fdfcf7;
 }
