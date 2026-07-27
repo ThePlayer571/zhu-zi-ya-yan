@@ -322,7 +322,7 @@
       "title": "闻新录异",
       "description": "依次读入五个整数。若当前整数为首次出现，则输出之；若此前已出现过，则跳过不输出。\n\n譬如史官记事，已录者不复录，唯新事入典。此题习列表操作与去重逻辑。",
       "difficultyGroup": "殿试",
-      "category": "列表",
+      "category": "综合",
       "testCases": [
         {
           "inputs": [
@@ -364,7 +364,7 @@
       "title": "指月之指",
       "description": "先读入一个整数甲，表示目标位置。随后依次读入若干整数，输出其中第甲个。\n\n以手指月，指非月也——然循指可见月。甲者指也，第甲个数者月也。此题习计数与条件判断之配合。",
       "difficultyGroup": "院试",
-      "category": "综合",
+      "category": "递归",
       "testCases": [
         {
           "inputs": [
@@ -402,7 +402,7 @@
       "title": "累土成山",
       "description": "读入一个整数甲，求前甲项之和（即一+二+…+甲），输出结果。\n\n九层之台，起于累土。合抱之木，生于毫末。逐次累加，终成巨数。此题习递归累加。",
       "difficultyGroup": "乡试",
-      "category": "算法",
+      "category": "递归",
       "testCases": [
         {
           "inputs": [
@@ -438,7 +438,7 @@
       "title": "聚沙成塔",
       "description": "先读入整数甲，随后依次读入甲个整数，求其总和并输出。\n\n聚沙成塔，集腋成裘。甲个数各自微末，合而计之，其力不微。此题习计数器控制之循环。",
       "difficultyGroup": "院试",
-      "category": "算术",
+      "category": "递归",
       "testCases": [
         {
           "inputs": [
@@ -559,7 +559,7 @@
       "title": "按图索骥",
       "description": "先读入一个整数甲。随后依次读入若干整数，其中必有一数等于甲。输出该数出现之位置（从1开始计数）。\n\n按图索骥，循名责实。已知骥在群马之中，试寻其位次。此题习线性搜寻。",
       "difficultyGroup": "乡试",
-      "category": "算法",
+      "category": "递归",
       "testCases": [
         {
           "inputs": [

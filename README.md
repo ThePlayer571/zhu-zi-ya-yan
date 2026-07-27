@@ -10,6 +10,10 @@
 
 网站主页：https://zhuziyayan.vercel.app
 
+> 使用vercel部署，国内需要科学上网访问。
+>
+> 若网站无内容，尝试使用 Ctrl+F5 强制刷新。
+
 教程：https://github.com/ThePlayer571/zhu-zi-ya-yan/blob/master/docs/tutorial.md
 
 ## 如何体验？
